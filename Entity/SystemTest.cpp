@@ -82,24 +82,17 @@ TEST_CASE("Scoped Signal")
     CHECK(OnAddScopedConnectionSlot::counter == 1);
 }
 
-struct HasOddId
-{
-    bool operator()(Base en) const
-    {
-        return en.id() % 2 == 1;
-    }
-};
-
 using namespace ranges;
 #include <iostream>
-#include <range/v3/core.hpp>
-#include <range/v3/algorithm/for_each.hpp>
 TEST_CASE("As Range")
 {
     System<Base> sys;
     const std::array<Base, 3> entities{{sys.add(), sys.add(), sys.add()}};
     CHECK(sys.asRange().size() == entities.size());
-    std::vector<int> vi{1,2,3,4,5,6,7,8,9,10};
-    auto rng = vi | view::remove_if([](int i){return i % 2 == 1;})
-                  | view::transform([](int i){return std::to_string(i);});
+    auto range   = sys.asRange();
+    auto lastTwo = sys.asRange() | view::drop(1);
+    auto last    = sys.asRange() | view::drop(2);
+    CHECK(entities[0] == *begin(range));
+    CHECK(entities[1] == *begin(lastTwo));
+    CHECK(entities[2] == *begin(last));
 }

@@ -59,3 +59,19 @@ TEST_CASE("Scoped Connections")
     }
     CHECK_NOTHROW(sys.add());
 }
+
+using namespace ranges;
+#include <iostream>
+TEST_CASE("As Range")
+{
+    System<Base> sys;
+    auto prop = makeProperty<Base, double>(sys);
+    prop[sys.add()] = 42.0;
+    auto range = prop.asRange();
+    REQUIRE(*begin(range) == 42.0);
+
+    for_each(view::zip(sys.asRange(), prop.asRange()), [](std::pair<Base, double> el){
+        std::cout << el.first.id() << ": " << el.second << std::endl;
+    });
+}
+

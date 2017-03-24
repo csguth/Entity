@@ -42,6 +42,10 @@ public:
     {
         return m_values[key.id()];
     }
+    auto asRange() const
+    {
+        return ranges::make_iterator_range(m_values.begin(), m_values.end());
+    }
 protected:
     void onAdd(KeyType)
     {
