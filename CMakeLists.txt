@@ -10,6 +10,6 @@ set_property(TARGET boost PROPERTY
 
 # External 3rd party libs that we include
 INCLUDE_DIRECTORIES(3rdParty/catch/include)
-INCLUDE_DIRECTORIES(3rdParty/range-v3/include)
+
 
 add_subdirectory(Entity)
