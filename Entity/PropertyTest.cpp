@@ -67,10 +67,25 @@ TEST_CASE("As Range")
     System<Base> sys;
     auto prop = makeProperty<Base, double>(sys);
     prop[sys.add()] = 42.0;
+    prop[sys.add()] = 84.0;
     auto range = prop.asRange();
-    REQUIRE(*begin(range) == 42.0);
-
-    for_each(view::zip(sys.asRange(), prop.asRange()), [](std::pair<Base, double> el){
-        std::cout << el.first.id() << ": " << el.second << std::endl;
+    for_each(view::zip(sys.asRange(), prop.asRange()), [](std::pair<Base, double&> el){ // Should modify
+        static double count = 1.0;
+        el.second = 66.0 * count;
+        count += 1.0;
     });
+
+    for_each(view::zip(sys.asRange(), prop.asRange()), [](std::pair<Base, double> el){ // Should not modify
+        static double count = 1.0;
+        el.second = 77.0 * count;
+        count += 1.0;
+    });
+
+    std::vector<double> result;
+    for_each(view::zip(sys.asRange(), prop.asRange()), [&result](std::pair<Base, double> el){
+        result.push_back(el.second);
+    });
+
+    const std::vector<double> goldenResult{{66.0, 132.0}};
+    REQUIRE(std::equal(result.begin(), result.end(), goldenResult.begin(), goldenResult.end()));
 }

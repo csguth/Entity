@@ -36,13 +36,13 @@ public:
     }
     typename std::vector<ValueType>::reference operator[](KeyType key)
     {
-        return m_values[key.id()];
+        return m_values[static_cast<Base>(key).id()];
     }
     typename std::vector<ValueType>::const_reference operator[](KeyType key) const
     {
-        return m_values[key.id()];
+        return m_values[static_cast<Base>(key).id()];
     }
-    auto asRange() const
+    auto asRange()
     {
         return ranges::make_iterator_range(m_values.begin(), m_values.end());
     }

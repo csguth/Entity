@@ -9,7 +9,7 @@ namespace Entity {
 class Base
 {
 public:
-    Base() : m_id(0)
+    Base() : m_id(std::numeric_limits<uint32_t>::max())
     {
 
     }
