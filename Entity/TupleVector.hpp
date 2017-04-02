@@ -7,48 +7,54 @@
 namespace Entity
 {
 
+template<class T>
+constexpr T integerCeilDivision(T x, T y)
+{
+    return (x % y == 0) ? x/y : (x/y) + 1;
+}
+
 template<uint32_t offset, class ...Types>
 struct TupleVectorTraits
 {
-    static constexpr std::size_t beginByte(const std::vector<std::tuple<Types...>>& data)
+    using CurrentType = typename std::tuple_element<offset-1, std::tuple<Types...>>::type;
+    static constexpr std::size_t wordsNeeded(std::size_t numElements)
     {
-        auto capacity    = data.capacity();
-        auto beginOfPrev = TupleVectorTraits<offset-1, Types...>::beginByte(data);
-        return beginOfPrev + capacity * sizeof(typename std::tuple_element<offset-1, std::tuple<Types...>>::type);
+        const auto numWords = integerCeilDivision(numElements*sizeof(CurrentType), sizeof(uint32_t));
+        return numWords + TupleVectorTraits<offset-1, Types...>::wordsNeeded(numElements);
     }
-    static constexpr std::size_t endByte(const std::vector<std::tuple<Types...>>& data)
+    static constexpr std::size_t firstWord(std::size_t capacity)
     {
-        return TupleVectorTraits<offset, Types...>::beginByte(data) + data.size() * sizeof(typename std::tuple_element<offset, std::tuple<Types...>>::type);
+        return TupleVectorTraits<offset-1, Types...>::lastWord(capacity);
     }
-    static constexpr void copy(const std::vector<std::tuple<Types...>>& orig, std::vector<std::tuple<Types...>>& dest)
+    static constexpr std::size_t lastWord(std::size_t capacity)
     {
-        auto origData = reinterpret_cast<const uint8_t*>(orig.data());
-        auto destData = reinterpret_cast<uint8_t*>(dest.data());
-        std::copy(origData + beginByte(orig), origData + endByte(orig), destData + beginByte(dest));
-        TupleVectorTraits<offset-1, Types...>::copy(orig, dest);
+        return TupleVectorTraits<offset, Types...>::firstWord(capacity) + integerCeilDivision(capacity*sizeof(CurrentType), sizeof(uint32_t));
+    }
+    static constexpr void copy(const std::vector<uint32_t>& origin, std::size_t originCapacity, std::vector<uint32_t>& destination, std::size_t destinationCapacity)
+    {
+        TupleVectorTraits<offset-1, Types...>::copy(origin, originCapacity, destination, destinationCapacity);
+        std::copy(std::next(origin.begin(), firstWord(originCapacity)), std::next(origin.begin(), lastWord(originCapacity)), std::next(destination.begin(), firstWord(destinationCapacity)));
     }
 };
 
 template<class ...Types>
 struct TupleVectorTraits<0, Types...>
 {
-    static constexpr std::size_t beginByte(const std::vector<std::tuple<Types...>>&)
+    static constexpr std::size_t wordsNeeded(std::size_t size)
     {
         return 0;
     }
-    static constexpr std::size_t endByte(const std::vector<std::tuple<Types...>>& data)
+    static constexpr std::size_t firstWord(std::size_t capacity)
     {
-        return data.size() * sizeof(typename std::tuple_element<0, std::tuple<Types...>>::type);
+        return 0;
     }
-    static constexpr void forEach(std::function<void(std::size_t)> callable)
+    static constexpr std::size_t lastWord(std::size_t capacity)
     {
-        callable(0);
+        return 0;
     }
-    static constexpr void copy(const std::vector<std::tuple<Types...>>& orig, std::vector<std::tuple<Types...>>& dest)
+    static constexpr void copy(const std::vector<uint32_t>&, std::size_t, std::vector<uint32_t>&, std::size_t)
     {
-        auto origData = reinterpret_cast<const uint8_t*>(orig.data());
-        auto destData = reinterpret_cast<uint8_t*>(dest.data());
-        std::copy(origData + beginByte(orig), origData + endByte(orig), destData + beginByte(dest));
+
     }
 };
 
@@ -56,16 +62,24 @@ template <class ... Types>
 class TupleVector
 {
 public:
+    TupleVector(std::size_t size) :
+        m_actualSize(size),
+        m_capacity(size),
+        m_data(TupleVectorTraits<sizeof...(Types), Types...>::wordsNeeded(size))
+    {
+    }
     TupleVector():
-        m_actualSize(0)
+        m_actualSize(0),
+        m_capacity(0)
     {
 
     }
-    TupleVector(std::size_t initialSize):
-        m_data(initialSize),
-        m_actualSize(initialSize)
+    friend void swap(TupleVector& first, TupleVector& second)
     {
-
+        using std::swap;
+        swap(first.m_actualSize, second.m_actualSize);
+        swap(first.m_capacity,   second.m_capacity);
+        first.m_data.swap(second.m_data);
     }
     constexpr std::size_t size() const
     {
@@ -77,54 +91,54 @@ public:
     }
     constexpr std::size_t capacity() const
     {
-        return m_data.size();
+        return m_capacity;
     }
     void reserve(std::size_t newCapacity)
     {
-        if(newCapacity > capacity())
-        {
-            TupleVector<Types...> temp(newCapacity);
-            TupleVectorTraits<sizeof...(Types)-1, Types...>::copy(m_data, temp.m_data);
-            m_data.swap(temp.m_data);
-        }
+        TupleVector<Types...> other(newCapacity);
+        other.resize(m_actualSize);
+        TupleVectorTraits<sizeof...(Types), Types...>::copy(m_data, m_capacity, other.m_data, other.m_capacity);
+        swap(*this, other);
     }
     void resize(std::size_t newSize)
     {
-        reserve(newSize);
-        m_actualSize = newSize;
+        if(newSize <= m_capacity)
+        {
+            m_actualSize = newSize;
+        }
+        else
+        {
+            reserve(newSize);
+            resize(newSize);
+        }
     }
     void clear()
     {
-        TupleVector<Types...> temp;
-        std::swap(*this, temp);
+        TupleVector<Types...> other;
+        swap(*this, other);
     }
-    template <uint32_t offset, class ValueType>
-    void set(std::size_t index, ValueType value)
+    template <uint32_t offset>
+    void set(std::size_t index, typename std::tuple_element<offset, std::tuple<Types...>>::type value)
     {
-        const auto asBytes = reinterpret_cast<uint8_t*>(m_data.data());
-        reinterpret_cast<ValueType*>(std::addressof(asBytes[beginByte<offset>()]))[index] = value;
+        using ValueType = typename std::tuple_element<offset, std::tuple<Types...>>::type;
+        auto addressOfTheFirstWord = std::addressof(m_data.data()[TupleVectorTraits<offset+1, Types...>::firstWord(m_actualSize)]);
+        reinterpret_cast<ValueType*>(addressOfTheFirstWord)[index] = value;
     }
     template <uint32_t offset>
     typename std::tuple_element<offset, std::tuple<Types...>>::type at(std::size_t index) const
     {
-        using ReturnType = typename std::tuple_element<offset, std::tuple<Types...>>::type;
-        const auto asBytes = reinterpret_cast<const uint8_t*>(m_data.data());
-        return reinterpret_cast<const ReturnType*>(std::addressof(asBytes[beginByte<offset>()]))[index];
+        using ValueType = typename std::tuple_element<offset, std::tuple<Types...>>::type;
+        return reinterpret_cast<const ValueType*>(std::addressof(m_data.data()[TupleVectorTraits<offset+1, Types...>::firstWord(m_actualSize)]))[index];
     }
-    template <uint32_t offset>
-    constexpr std::size_t endByte() const
+    const std::vector<uint32_t>& data() const
     {
-        return TupleVectorTraits<offset, Types...>::endByte(m_data);
-    }
-    template <uint32_t offset>
-    constexpr std::size_t beginByte() const
-    {
-        return TupleVectorTraits<offset, Types...>::beginByte(m_data);
+        return m_data;
     }
 
 private:
-    std::vector<std::tuple<Types...>> m_data;
-    std::size_t                       m_actualSize;
+    std::size_t           m_actualSize;
+    std::size_t           m_capacity;
+    std::vector<uint32_t> m_data;
 
 };
 
