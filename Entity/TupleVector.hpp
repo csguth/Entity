@@ -32,23 +32,24 @@ struct TupleVectorTraits
     }
     static constexpr void copy(const std::vector<uint32_t>& origin, std::size_t originCapacity, std::vector<uint32_t>& destination, std::size_t destinationCapacity)
     {
+        const auto numWords = integerCeilDivision(originCapacity*sizeof(CurrentType), sizeof(uint32_t));
+        std::copy_backward(origin.begin() + firstWord(originCapacity), origin.begin() + lastWord(originCapacity), destination.begin() + firstWord(destinationCapacity) + numWords);
         TupleVectorTraits<offset-1, Types...>::copy(origin, originCapacity, destination, destinationCapacity);
-        std::copy(std::next(origin.begin(), firstWord(originCapacity)), std::next(origin.begin(), lastWord(originCapacity)), std::next(destination.begin(), firstWord(destinationCapacity)));
     }
 };
 
 template<class ...Types>
 struct TupleVectorTraits<0, Types...>
 {
-    static constexpr std::size_t wordsNeeded(std::size_t size)
+    static constexpr std::size_t wordsNeeded(std::size_t)
     {
         return 0;
     }
-    static constexpr std::size_t firstWord(std::size_t capacity)
+    static constexpr std::size_t firstWord(std::size_t)
     {
         return 0;
     }
-    static constexpr std::size_t lastWord(std::size_t capacity)
+    static constexpr std::size_t lastWord(std::size_t)
     {
         return 0;
     }
@@ -70,7 +71,8 @@ public:
     }
     TupleVector():
         m_actualSize(0),
-        m_capacity(0)
+        m_capacity(0),
+        m_data(TupleVectorTraits<sizeof...(Types), Types...>::wordsNeeded(1))
     {
 
     }
@@ -95,10 +97,9 @@ public:
     }
     void reserve(std::size_t newCapacity)
     {
-        TupleVector<Types...> other(newCapacity);
-        other.resize(m_actualSize);
-        TupleVectorTraits<sizeof...(Types), Types...>::copy(m_data, m_capacity, other.m_data, other.m_capacity);
-        swap(*this, other);
+        m_data.resize(TupleVectorTraits<sizeof...(Types), Types...>::wordsNeeded(newCapacity));
+        TupleVectorTraits<sizeof...(Types), Types...>::copy(m_data, m_capacity, m_data, newCapacity);
+        m_capacity = newCapacity;
     }
     void resize(std::size_t newSize)
     {
@@ -108,7 +109,7 @@ public:
         }
         else
         {
-            reserve(newSize);
+            reserve(std::max(1ul, m_capacity*2));
             resize(newSize);
         }
     }
@@ -121,14 +122,14 @@ public:
     void set(std::size_t index, typename std::tuple_element<offset, std::tuple<Types...>>::type value)
     {
         using ValueType = typename std::tuple_element<offset, std::tuple<Types...>>::type;
-        auto addressOfTheFirstWord = std::addressof(m_data.data()[TupleVectorTraits<offset+1, Types...>::firstWord(m_actualSize)]);
+        auto addressOfTheFirstWord = std::addressof(m_data.data()[TupleVectorTraits<offset+1, Types...>::firstWord(m_capacity)]);
         reinterpret_cast<ValueType*>(addressOfTheFirstWord)[index] = value;
     }
     template <uint32_t offset>
     typename std::tuple_element<offset, std::tuple<Types...>>::type at(std::size_t index) const
     {
         using ValueType = typename std::tuple_element<offset, std::tuple<Types...>>::type;
-        return reinterpret_cast<const ValueType*>(std::addressof(m_data.data()[TupleVectorTraits<offset+1, Types...>::firstWord(m_actualSize)]))[index];
+        return reinterpret_cast<const ValueType*>(std::addressof(m_data.data()[TupleVectorTraits<offset+1, Types...>::firstWord(m_capacity)]))[index];
     }
     const std::vector<uint32_t>& data() const
     {

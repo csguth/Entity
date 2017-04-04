@@ -241,20 +241,19 @@ TEST_CASE("Reallocation keeps elements on their positions")
     vector.set<2>(0, 0xCCCCCCCCFFFFFFFFul);
     vector.set<2>(1, 0xFFFFFFFFCCCCCCCCul);
 
-    {
-        const std::vector<uint32_t> goldenData{{0xCCCCCCFF, 0xCCCCFFCC, ('c' | ('d' << 8) ), 0xFFFFFFFF, 0xCCCCCCCC, 0xCCCCCCCC, 0xFFFFFFFF}};
-        CHECK(vector.data() == goldenData);
-    }
-
     vector.resize(3);
 
     {
-        const std::vector<uint32_t> goldenData{{0xCCCCCCFF, 0xCCCCFFCC, 0, ('c' | ('d' << 8) ), 0xFFFFFFFF, 0xCCCCCCCC, 0xCCCCCCCC, 0xFFFFFFFF, 0, 0}};
-        CHECK(vector.data() == goldenData);
+        CHECK(vector.at<0>(0) == 0xCCCCCCFF);
+        CHECK(vector.at<0>(1) == 0xCCCCFFCC);
+        CHECK(vector.at<1>(0) == 'c');
+        CHECK(vector.at<1>(1) == 'd');
+        CHECK(vector.at<2>(0) == 0xCCCCCCCCFFFFFFFFul);
+        CHECK(vector.at<2>(1) == 0xFFFFFFFFCCCCCCCCul);
     }
 
     CHECK(vector.size() == 3);
-    CHECK(vector.capacity() == 3);
+    CHECK(vector.capacity() == 4);
 
 //    //[   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,  32,  33,  34,  35,  36,  37,  38]
 //    //[32_0,32_0,32_0,32_0,32_1,32_1,32_1,32_1,32_2,32_2,32_2,32_2, 8_0, 8_1, 8_2,64_0,64_0,64_0,64_0,64_0,64_0,64_0,64_0,64_1,64_1,64_1,64_1,64_1,64_1,64_1,64_1,64_2,64_2,64_2,64_2,64_2,64_2,64_2,64_2]
@@ -280,10 +279,5 @@ TEST_CASE("Reallocation keeps elements on their positions")
     CHECK(constVector.at<2>(0) == 0xCCCCCCCCFFFFFFFF);
     CHECK(constVector.at<2>(1) == 0xFFFFFFFFCCCCCCCC);
     CHECK(constVector.at<2>(2) == 0xDDDDDDDDEEEEEEEE);
-
-    {
-        const std::vector<uint32_t> goldenData{{0xCCCCCCFF, 0xCCCCFFCC, 0xAAAAAAAA, ((uint32_t)'c' | ((uint32_t)'d' << 8) | ((uint32_t)'b' << 16)), 0xFFFFFFFF, 0xCCCCCCCC, 0xCCCCCCCC, 0xFFFFFFFF, 0xEEEEEEEE, 0xDDDDDDDD}};
-        CHECK(vector.data() == goldenData);
-    }
 
 }

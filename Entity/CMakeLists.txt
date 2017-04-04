@@ -16,5 +16,8 @@ add_executable(TupleVectorTest TupleVectorTest.cpp)
 target_link_libraries(TupleVectorTest Entity)
 add_test(TupleVectorTest TupleVectorTest)
 
+add_executable(TupleVectorBenchmark TupleVectorBenchmark.cpp)
+target_link_libraries(TupleVectorBenchmark Entity)
+
 file(GLOB HEADER_FILES "*.hpp")
 install(FILES ${HEADER_FILES} DESTINATION include/Entity)
