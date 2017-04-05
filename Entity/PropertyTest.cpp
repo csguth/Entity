@@ -89,3 +89,15 @@ TEST_CASE("As Range")
     const std::vector<double> goldenResult{{66.0, 132.0}};
     REQUIRE(std::equal(result.begin(), result.end(), goldenResult.begin(), goldenResult.end()));
 }
+
+#include "SystemWithDeletion.hpp"
+
+TEST_CASE("Deletion")
+{
+    SystemWithDeletion<Base> sys;
+    auto prop = makeProperty<Base, double>(sys);
+    auto en = sys.add();
+    CHECK(!prop.empty());
+    sys.erase(en);
+    CHECK(prop.empty());
+}

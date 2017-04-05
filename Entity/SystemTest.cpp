@@ -96,3 +96,44 @@ TEST_CASE("As Range")
     CHECK(entities[1] == *begin(lastTwo));
     CHECK(entities[2] == *begin(last));
 }
+
+#include "SystemWithDeletion.hpp"
+
+TEST_CASE("Deletion")
+{
+    {
+        SystemWithDeletion<Base> sys;
+        const Base b = sys.add();
+        sys.erase(b);
+        CHECK(sys.empty());
+        CHECK(!sys.alive(b));
+    }
+    {
+        SystemWithDeletion<Base> sys;
+        sys.connectOnAdd([](Base)
+        {
+
+        });
+        const Base en0 = sys.add();
+        const Base en1 = sys.add();
+        sys.erase(en0);
+        CHECK(!sys.alive(en0));
+        CHECK(sys.alive(en1));
+    }
+    {
+        SystemWithDeletion<Base> sys;
+        std::vector<Base> erased;
+        sys.connectOnErase([&erased](const Base en)
+        {
+            erased.push_back(en);
+        });
+        const Base en0 = sys.add();
+        const Base en1 = sys.add();
+        const Base en2 = sys.add();
+        sys.erase(en0);
+        sys.erase(en2);
+        const std::vector<Base> golden{{en0, en2}};
+        CHECK(std::is_permutation(erased.begin(), erased.end(), golden.begin(), golden.end()));
+    }
+
+}

@@ -42,39 +42,15 @@ private:
 };
 
 template <class EntityType>
-class System
+class SystemBase
 {
 public:
-    using size_type       = typename std::vector<EntityType>::size_type;
-    using OnAddSignal     = typename boost::signals2::signal<void(EntityType)> ;
-    using OnReserveSignal = boost::signals2::signal<void(size_type)> ;
+    using OnAddSignal     = typename boost::signals2::signal<void(EntityType)>;
+    using OnReserveSignal = boost::signals2::signal<void(std::size_t)>;
 
-private:
-    OnAddSignal m_onAdd;
-    OnReserveSignal m_onReserve;
-
-public:
-    System()
+    virtual ~SystemBase()
     {
 
-    }
-    constexpr bool empty() const
-    {
-        return m_entities.empty();
-    }
-    constexpr size_type size() const
-    {
-        return m_entities.size();
-    }
-    constexpr size_type capacity() const
-    {
-        return m_entities.capacity();
-    }
-    EntityType add()
-    {
-        m_entities.emplace_back(m_entities.size());
-        m_onAdd(m_entities.back());
-        return m_entities.back();
     }
     boost::signals2::connection connectOnAdd(typename OnAddSignal::slot_type slot)
     {
@@ -84,24 +60,64 @@ public:
     {
         return m_onReserve.connect(std::move(slot));
     }
-    void reserve(size_type size)
+    constexpr bool empty() const
     {
-        m_onReserve(size);
-        m_entities.reserve(size);
+        return m_entities.empty();
     }
-    bool alive(EntityType entity) const
+    constexpr std::size_t size() const
     {
-        return static_cast<Base>(entity).id() < m_entities.size();
+        return m_entities.size();
+    }
+    constexpr std::size_t capacity() const
+    {
+        return m_entities.capacity();
     }
     auto asRange() const
     {
         return ranges::make_iterator_range(m_entities.begin(), m_entities.end());
     }
-private:
-    std::vector<EntityType> m_entities;
 
+protected:
+    std::vector<EntityType> m_entities;
+    OnAddSignal             m_onAdd;
+    OnReserveSignal         m_onReserve;
+
+};
+
+template <class EntityType>
+class System: public SystemBase<EntityType>
+{
+public:
+    using typename SystemBase<EntityType>::OnAddSignal;
+    using typename SystemBase<EntityType>::OnReserveSignal;
+
+    System()
+    {
+
+    }
+    EntityType add()
+    {
+        this->m_entities.emplace_back(this->size());
+        this->m_onAdd(this->m_entities.back());
+        return this->m_entities.back();
+    }
+    void reserve(std::size_t size)
+    {
+        this->m_onReserve(size);
+        this->m_entities.reserve(size);
+    }
+    bool alive(EntityType entity) const
+    {
+        return static_cast<Base>(entity).id() < this->m_entities.size();
+    }
+    std::size_t lookup(EntityType en) const
+    {
+        return en.id();
+    }
+private:
 };
 
 }
 
 #endif // SYSTEM_HPP
+

@@ -2,25 +2,49 @@
 #define PROPERTY_H
 
 #include "System.hpp"
-
+#include <iostream>
+#include <type_traits>
 namespace Entity
 {
 
-template <class KeyType, class ValueType>
+
+template<class T, class Callable>
+auto connectOnErase(int, T& sys, boost::signals2::scoped_connection& connection, Callable cb) -> decltype(&T::erase, void())
+{
+    connection = std::move(sys.connectOnErase(cb));
+}
+
+template<class T, class Callable>
+auto connectOnErase(char, T&, boost::signals2::scoped_connection&, Callable) -> decltype(void(), void())
+{
+}
+
+template <typename KeyType, typename ValueType, template <typename> class SystemType>
 class Property
 {
 public:
-    Property()
+    Property():
+        m_system(nullptr)
     {
 
     }
-    Property(System<KeyType>& sys):
-        Property()
+    Property(SystemType<KeyType>& sys):
+        m_system(&sys)
     {
         m_values.reserve(sys.capacity());
         m_values.resize(sys.size());
-        m_onAddConnection     = std::move(sys.connectOnAdd(std::bind(&Property<KeyType, ValueType>::onAdd, this, std::placeholders::_1)));
-        m_onReserveConnection = std::move(sys.connectOnReserve(std::bind(&Property<KeyType, ValueType>::onReserve, this, std::placeholders::_1)));
+        m_onAddConnection     = std::move(sys.connectOnAdd([this](KeyType en)
+        {
+            this->onAdd(en);
+        }));
+        m_onReserveConnection = std::move(sys.connectOnReserve([this](std::size_t size)
+        {
+            this->onReserve(size);
+        }));
+        connectOnErase(0, sys, m_onEraseConnection, [this](KeyType en)
+        {
+            this->onErase(en);
+        });
     }
     constexpr typename std::vector<ValueType>::size_type size() const
     {
@@ -36,11 +60,11 @@ public:
     }
     typename std::vector<ValueType>::reference operator[](KeyType key)
     {
-        return m_values[static_cast<Base>(key).id()];
+        return m_values[m_system->lookup(key)];
     }
     typename std::vector<ValueType>::const_reference operator[](KeyType key) const
     {
-        return m_values[static_cast<Base>(key).id()];
+        return m_values[m_system->lookup(key)];
     }
     auto asRange()
     {
@@ -51,20 +75,28 @@ protected:
     {
         m_values.push_back(ValueType{});
     }
-    void onReserve(typename System<KeyType>::size_type size)
+    void onReserve(std::size_t size)
     {
         m_values.reserve(size);
     }
+    void onErase(KeyType en)
+    {
+        std::swap(m_values.back(), m_values[m_system->lookup(en)]);
+        m_values.pop_back();
+    }
+
 private:
-    std::vector<ValueType> m_values;
+    const SystemType<KeyType>*         m_system;
+    std::vector<ValueType>             m_values;
     boost::signals2::scoped_connection m_onAddConnection;
     boost::signals2::scoped_connection m_onReserveConnection;
+    boost::signals2::scoped_connection m_onEraseConnection;
 };
 
-template <class KeyType, class ValueType>
-Property<KeyType, ValueType> makeProperty(System<KeyType>& system)
+template <typename KeyType, typename ValueType, template <typename> class SystemType>
+Property<KeyType, ValueType, SystemType> makeProperty(SystemType<KeyType>& system)
 {
-    return Property<KeyType, ValueType>(system);
+    return {system};
 }
 
 }
