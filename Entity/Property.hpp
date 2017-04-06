@@ -26,9 +26,22 @@ public:
     {
         using std::swap;
         swap(*this, other);
+        return *this;
+    }
+    Property(const Property& other):
+        m_indexer(other.m_indexer),
+        m_notifier(other.m_notifier),
+        m_values(other.m_values)
+    {
+        connectSignals();
+    }
+    Property& operator=(const Property& other)
+    {
+        Property copy(other);
+        return *this = std::move(copy);
     }
     Property(SystemType<KeyType>& sys):
-        m_system(sys.indexer()),
+        m_indexer(sys.indexer()),
         m_notifier(sys.notifier())
     {
         m_values.reserve(sys.capacity());
@@ -49,11 +62,11 @@ public:
     }
     typename std::vector<ValueType>::reference operator[](KeyType key)
     {
-        return m_values[m_system->lookup(key)];
+        return m_values[m_indexer->lookup(key)];
     }
     typename std::vector<ValueType>::const_reference operator[](KeyType key) const
     {
-        return m_values[m_system->lookup(key)];
+        return m_values[m_indexer->lookup(key)];
     }
     auto asRange()
     {
@@ -70,7 +83,7 @@ protected:
     }
     void onErase(KeyType en)
     {
-        std::swap(m_values.back(), m_values[m_system->lookup(en)]);
+        std::swap(m_values.back(), m_values[m_indexer->lookup(en)]);
         m_values.pop_back();
     }
     void connectSignals()
@@ -94,14 +107,14 @@ protected:
     friend void swap(Property& first, Property& second)
     {
         using std::swap;
-        swap(first.m_system,   second.m_system);
+        swap(first.m_indexer,   second.m_indexer);
         swap(first.m_notifier, second.m_notifier);
         swap(first.m_values,   second.m_values);
         first.connectSignals();
     }
 
 private:
-    std::shared_ptr<typename SystemType<KeyType>::Indexer> m_system;
+    std::shared_ptr<typename SystemType<KeyType>::Indexer> m_indexer;
     std::weak_ptr<typename SystemType<KeyType>::Notifier>  m_notifier;
     std::vector<ValueType>                                 m_values;
     boost::signals2::scoped_connection                     m_onAddConnection;

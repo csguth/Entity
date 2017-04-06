@@ -155,3 +155,51 @@ TEST_CASE("Independent Lifetimes")
         CHECK(prop[entities[2]] == 3.0);
     }
 }
+
+TEST_CASE("Move")
+{
+    auto createProp = [](SystemWithDeletion<Base>& theSys)
+    {
+        return makeProperty<double>(theSys);
+    };
+    SystemWithDeletion<Base> sys;
+    auto en0 = sys.add();
+    auto en1 = sys.add();
+    auto en2 = sys.add();
+
+    // Move assignment
+    Property<Base, double, SystemWithDeletion> prop;
+    prop = createProp(sys);
+    prop[en0] = 42.0;
+    prop[en1] = 24.0;
+    prop[en2] = 84.0;
+
+    // Move construction
+    Property<Base, double, SystemWithDeletion> prop2 = createProp(sys);
+    CHECK(prop.size() == 3);
+
+    // Copy assignment
+    prop2 = prop;
+    CHECK(prop2[en0] == 42.0);
+    CHECK(prop2[en1] == 24.0);
+    CHECK(prop2[en2] == 84.0);
+    sys.add();
+    CHECK(prop.size() == prop2.size());
+    CHECK(prop.size() == 4);
+
+    // Move assigment
+    Property<Base, double, SystemWithDeletion> prop3;
+    prop3 = std::move(prop2);
+    CHECK(prop3[en0] == 42.0);
+    CHECK(prop3[en1] == 24.0);
+    CHECK(prop3[en2] == 84.0);
+    sys.add();
+    CHECK(prop.size() == prop3.size());
+    CHECK(prop.size() == 5);
+
+    // Copy construction
+    Property<Base, double, SystemWithDeletion> prop4(prop3);
+    CHECK(prop4[en0] == 42.0);
+    CHECK(prop4[en1] == 24.0);
+    CHECK(prop4[en2] == 84.0);
+}
