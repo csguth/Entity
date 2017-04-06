@@ -41,25 +41,46 @@ private:
     uint32_t m_id;
 };
 
+
+
 template <class EntityType>
 class SystemBase
 {
 public:
-    using OnAddSignal     = typename boost::signals2::signal<void(EntityType)>;
-    using OnReserveSignal = boost::signals2::signal<void(std::size_t)>;
+    class Notifier final
+    {
+    public:
+        friend SystemBase;
+        using OnAddSignal     = typename boost::signals2::signal<void(EntityType)>;
+        using OnReserveSignal = boost::signals2::signal<void(std::size_t)>;
+        using OnEraseSignal   = typename boost::signals2::signal<void(EntityType)>;
 
-    virtual ~SystemBase()
+        ~Notifier() = default;
+
+        boost::signals2::connection connectOnAdd(typename OnAddSignal::slot_type slot)
+        {
+            return m_onAdd.connect(std::move(slot));
+        }
+        boost::signals2::connection connectOnReserve(typename OnReserveSignal::slot_type slot)
+        {
+            return m_onReserve.connect(std::move(slot));
+        }
+        boost::signals2::connection connectOnErase(typename OnEraseSignal::slot_type slot)
+        {
+            return m_onErase.connect(std::move(slot));
+        }
+    private:
+        OnAddSignal     m_onAdd;
+        OnReserveSignal m_onReserve;
+        OnEraseSignal   m_onErase;
+    };
+
+    SystemBase():
+        m_notifier(std::make_shared<Notifier>())
     {
 
     }
-    boost::signals2::connection connectOnAdd(typename OnAddSignal::slot_type slot)
-    {
-        return m_onAdd.connect(std::move(slot));
-    }
-    boost::signals2::connection connectOnReserve(typename OnReserveSignal::slot_type slot)
-    {
-        return m_onReserve.connect(std::move(slot));
-    }
+    virtual ~SystemBase() = default;
     constexpr bool empty() const
     {
         return m_entities.empty();
@@ -76,20 +97,52 @@ public:
     {
         return ranges::make_iterator_range(m_entities.begin(), m_entities.end());
     }
+    std::weak_ptr<Notifier> notifier() const
+    {
+        return {m_notifier};
+    }
+    boost::signals2::connection connectOnAdd(typename Notifier::OnAddSignal::slot_type slot)
+    {
+        return m_notifier->connectOnAdd(slot);
+    }
+    boost::signals2::connection connectOnReserve(typename Notifier::OnReserveSignal::slot_type slot)
+    {
+        return m_notifier->connectOnReserve(slot);
+    }
+    boost::signals2::connection connectOnErase(typename Notifier::OnEraseSignal::slot_type slot)
+    {
+        return m_notifier->connectOnErase(slot);
+    }
 
 protected:
-    std::vector<EntityType> m_entities;
-    OnAddSignal             m_onAdd;
-    OnReserveSignal         m_onReserve;
+    void notifyAdd()
+    {
+        m_notifier->m_onAdd(m_entities.back());
+    }
+    void notifyReserve(std::size_t size)
+    {
+        m_notifier->m_onReserve(size);
+    }
+    void notifyErase(EntityType en)
+    {
+        m_notifier->m_onErase(en);
+    }
 
+    std::vector<EntityType>   m_entities;
+    std::shared_ptr<Notifier> m_notifier;
 };
 
 template <class EntityType>
 class System: public SystemBase<EntityType>
 {
 public:
-    using typename SystemBase<EntityType>::OnAddSignal;
-    using typename SystemBase<EntityType>::OnReserveSignal;
+    struct Indexer
+    {
+        std::size_t lookup(EntityType en) const
+        {
+            return static_cast<Base>(en).id();
+        }
+    };
 
     System()
     {
@@ -98,21 +151,22 @@ public:
     EntityType add()
     {
         this->m_entities.emplace_back(this->size());
-        this->m_onAdd(this->m_entities.back());
+        this->notifyAdd();
         return this->m_entities.back();
     }
     void reserve(std::size_t size)
     {
-        this->m_onReserve(size);
+        this->notifyReserve(size);
         this->m_entities.reserve(size);
     }
     bool alive(EntityType entity) const
     {
         return static_cast<Base>(entity).id() < this->m_entities.size();
     }
-    std::size_t lookup(EntityType en) const
+    std::shared_ptr<Indexer> indexer() const
     {
-        return static_cast<Base>(en).id();
+        static std::shared_ptr<Indexer> staticIndexer{std::make_shared<Indexer>()};
+        return staticIndexer;
     }
 private:
 };

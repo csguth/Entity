@@ -7,44 +7,33 @@
 namespace Entity
 {
 
-
-template<class T, class Callable>
-auto connectOnErase(int, T& sys, boost::signals2::scoped_connection& connection, Callable cb) -> decltype(&T::erase, void())
-{
-    connection = std::move(sys.connectOnErase(cb));
-}
-
-template<class T, class Callable>
-auto connectOnErase(char, T&, boost::signals2::scoped_connection&, Callable) -> decltype(void(), void())
-{
-}
-
 template <typename KeyType, typename ValueType, template <typename> class SystemType>
-class Property
+class Property final
 {
 public:
-    Property():
-        m_system(nullptr)
+    Property()
     {
 
     }
+    ~Property() = default;
+    Property(Property&& other):
+        Property()
+    {
+        using std::swap;
+        swap(*this, other);
+    }
+    Property& operator=(Property&& other)
+    {
+        using std::swap;
+        swap(*this, other);
+    }
     Property(SystemType<KeyType>& sys):
-        m_system(&sys)
+        m_system(sys.indexer()),
+        m_notifier(sys.notifier())
     {
         m_values.reserve(sys.capacity());
         m_values.resize(sys.size());
-        m_onAddConnection     = std::move(sys.connectOnAdd([this](KeyType en)
-        {
-            this->onAdd(en);
-        }));
-        m_onReserveConnection = std::move(sys.connectOnReserve([this](std::size_t size)
-        {
-            this->onReserve(size);
-        }));
-        connectOnErase(0, sys, m_onEraseConnection, [this](KeyType en)
-        {
-            this->onErase(en);
-        });
+        connectSignals();
     }
     constexpr typename std::vector<ValueType>::size_type size() const
     {
@@ -84,13 +73,40 @@ protected:
         std::swap(m_values.back(), m_values[m_system->lookup(en)]);
         m_values.pop_back();
     }
+    void connectSignals()
+    {
+        if(auto notifier = m_notifier.lock())
+        {
+            m_onAddConnection     = std::move(notifier->connectOnAdd([this](KeyType en)
+            {
+                this->onAdd(en);
+            }));
+            m_onReserveConnection = std::move(notifier->connectOnReserve([this](std::size_t size)
+            {
+                this->onReserve(size);
+            }));
+            m_onEraseConnection   = std::move(notifier->connectOnErase([this](KeyType en)
+            {
+                this->onErase(en);
+            }));
+        }
+    }
+    friend void swap(Property& first, Property& second)
+    {
+        using std::swap;
+        swap(first.m_system,   second.m_system);
+        swap(first.m_notifier, second.m_notifier);
+        swap(first.m_values,   second.m_values);
+        first.connectSignals();
+    }
 
 private:
-    const SystemType<KeyType>*         m_system;
-    std::vector<ValueType>             m_values;
-    boost::signals2::scoped_connection m_onAddConnection;
-    boost::signals2::scoped_connection m_onReserveConnection;
-    boost::signals2::scoped_connection m_onEraseConnection;
+    std::shared_ptr<typename SystemType<KeyType>::Indexer> m_system;
+    std::weak_ptr<typename SystemType<KeyType>::Notifier>  m_notifier;
+    std::vector<ValueType>                                 m_values;
+    boost::signals2::scoped_connection                     m_onAddConnection;
+    boost::signals2::scoped_connection                     m_onReserveConnection;
+    boost::signals2::scoped_connection                     m_onEraseConnection;
 };
 
 template <typename ValueType, typename KeyType, template <typename> class SystemType>

@@ -137,3 +137,30 @@ TEST_CASE("Deletion")
     }
 
 }
+
+TEST_CASE("Indexer")
+{
+    {
+        System<Base> sys;
+        auto indexer = sys.indexer();
+        CHECK(indexer.use_count() == 2);
+        auto en = sys.add();
+        CHECK(indexer->lookup(en) == en.id());
+        System<Base> sys2;
+        auto indexer2 = sys2.indexer();
+        CHECK(indexer2.get() == indexer.get());
+    }
+    {
+        SystemWithDeletion<Base> sys;
+        auto indexer = sys.indexer();
+        CHECK(indexer.use_count() == 2);
+        auto en = sys.add();
+        auto en2 = sys.add();
+        sys.erase(en);
+        CHECK(indexer->lookup(en) == std::numeric_limits<std::size_t>::max());
+        CHECK(indexer->lookup(en2) == 0);
+        SystemWithDeletion<Base> sys2;
+        auto indexer2 = sys2.indexer();
+        CHECK(indexer2.get() != indexer.get());
+    }
+}

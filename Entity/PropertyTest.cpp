@@ -117,3 +117,41 @@ TEST_CASE("Deletion")
         CHECK(prop.size() == 2);
     }
 }
+
+TEST_CASE("Independent Lifetimes")
+{
+    {
+        Property<Base, double, System> prop;
+        std::vector<Base> entities;
+        {
+            System<Base> sys;
+            prop = makeProperty<double>(sys);
+            entities.push_back(sys.add());
+            entities.push_back(sys.add());
+            entities.push_back(sys.add());
+            prop[entities[0]] = 1.0;
+            prop[entities[1]] = 2.0;
+            prop[entities[2]] = 3.0;
+        }
+        CHECK(prop[entities[0]] == 1.0);
+        CHECK(prop[entities[1]] == 2.0);
+        CHECK(prop[entities[2]] == 3.0);
+    }
+    {
+        Property<Base, double, SystemWithDeletion> prop;
+        std::vector<Base> entities;
+        {
+            SystemWithDeletion<Base> sys;
+            prop = makeProperty<double>(sys);
+            entities.push_back(sys.add());
+            entities.push_back(sys.add());
+            entities.push_back(sys.add());
+            prop[entities[0]] = 1.0;
+            prop[entities[1]] = 2.0;
+            prop[entities[2]] = 3.0;
+        }
+        CHECK(prop[entities[0]] == 1.0);
+        CHECK(prop[entities[1]] == 2.0);
+        CHECK(prop[entities[2]] == 3.0);
+    }
+}
