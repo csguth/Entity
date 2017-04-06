@@ -74,12 +74,12 @@ public:
     template <class ValueType>
     auto makeVertexProperty()
     {
-        return Entity::makeProperty<Vertex, ValueType>(m_vertices);
+        return Entity::makeProperty<ValueType>(m_vertices);
     }
     template <class ValueType>
     auto makeArcProperty()
     {
-        return Entity::makeProperty<Arc, ValueType>(m_arcs);
+        return Entity::makeProperty<ValueType>(m_arcs);
     }
     auto vertices() const
     {

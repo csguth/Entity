@@ -93,7 +93,7 @@ private:
     boost::signals2::scoped_connection m_onEraseConnection;
 };
 
-template <typename KeyType, typename ValueType, template <typename> class SystemType>
+template <typename ValueType, typename KeyType, template <typename> class SystemType>
 Property<KeyType, ValueType, SystemType> makeProperty(SystemType<KeyType>& system)
 {
     return {system};
