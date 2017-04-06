@@ -72,12 +72,12 @@ public:
         return m_nextOutArc[std::move(arc)];
     }
     template <class ValueType>
-    Entity::Property<Vertex, ValueType> makeVertexProperty()
+    auto makeVertexProperty()
     {
         return Entity::makeProperty<Vertex, ValueType>(m_vertices);
     }
     template <class ValueType>
-    Entity::Property<Arc, ValueType> makeArcProperty()
+    auto makeArcProperty()
     {
         return Entity::makeProperty<Arc, ValueType>(m_arcs);
     }
@@ -90,16 +90,16 @@ public:
         return m_arcs.asRange();
     }
 private:
-    Entity::System<Vertex>             m_vertices;
-    Entity::Property<Vertex, Arc>      m_firstInArc;
-    Entity::Property<Vertex, Arc>      m_firstOutArc;
-    Entity::Property<Vertex, uint32_t> m_inDegree;
-    Entity::Property<Vertex, uint32_t> m_outDegree;
-    Entity::System<Arc>                m_arcs;
-    Entity::Property<Arc, Arc>         m_nextInArc;
-    Entity::Property<Arc, Arc>         m_nextOutArc;
-    Entity::Property<Arc, Vertex>      m_source;
-    Entity::Property<Arc, Vertex>      m_target;
+    Entity::System<Vertex>                             m_vertices;
+    Entity::Property<Vertex, Arc, Entity::System>      m_firstInArc;
+    Entity::Property<Vertex, Arc, Entity::System>      m_firstOutArc;
+    Entity::Property<Vertex, uint32_t, Entity::System> m_inDegree;
+    Entity::Property<Vertex, uint32_t, Entity::System> m_outDegree;
+    Entity::System<Arc>                                m_arcs;
+    Entity::Property<Arc, Arc, Entity::System>         m_nextInArc;
+    Entity::Property<Arc, Arc, Entity::System>         m_nextOutArc;
+    Entity::Property<Arc, Vertex, Entity::System>      m_source;
+    Entity::Property<Arc, Vertex, Entity::System>      m_target;
 };
 
 class Graph: private Digraph

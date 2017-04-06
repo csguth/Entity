@@ -112,7 +112,7 @@ public:
     }
     std::size_t lookup(EntityType en) const
     {
-        return en.id();
+        return static_cast<Base>(en).id();
     }
 private:
 };

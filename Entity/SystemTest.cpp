@@ -34,8 +34,8 @@ TEST_CASE("Reserve")
 {
     System<Base> sys;
     CHECK(sys.capacity() == 0);
-    System<Base>::size_type size = 0;
-    sys.connectOnReserve([&size](System<Base>::size_type newSize)
+    std::size_t size = 0;
+    sys.connectOnReserve([&size](std::size_t newSize)
     {
         size = newSize;
     });

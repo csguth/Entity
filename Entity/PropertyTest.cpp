@@ -94,10 +94,26 @@ TEST_CASE("As Range")
 
 TEST_CASE("Deletion")
 {
-    SystemWithDeletion<Base> sys;
-    auto prop = makeProperty<Base, double>(sys);
-    auto en = sys.add();
-    CHECK(!prop.empty());
-    sys.erase(en);
-    CHECK(prop.empty());
+    {
+        SystemWithDeletion<Base> sys;
+        auto prop = makeProperty<Base, double>(sys);
+        auto en = sys.add();
+        CHECK(!prop.empty());
+        sys.erase(en);
+        CHECK(prop.empty());
+    }
+    {
+        SystemWithDeletion<Base> sys;
+        auto prop = makeProperty<Base, double>(sys);
+        auto en0 = sys.add();
+        auto en1 = sys.add();
+        auto en2 = sys.add();
+        prop[en0] = 42.0;
+        prop[en1] = 84.0;
+        prop[en2] = 126.0;
+        sys.erase(en1);
+        CHECK(prop[en0] == 42.0);
+        CHECK(prop[en2] == 126.0);
+        CHECK(prop.size() == 2);
+    }
 }
