@@ -72,6 +72,10 @@ public:
     {
         return ranges::make_iterator_range(m_values.begin(), m_values.end());
     }
+    const ValueType* data() const
+    {
+        return m_values.data();
+    }
 protected:
     void onAdd(KeyType)
     {
