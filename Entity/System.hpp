@@ -3,6 +3,8 @@
 
 #include <boost/signals2/signal.hpp>
 #include <range/v3/all.hpp>
+#include <boost/signals2/dummy_mutex.hpp>
+#include <boost/signals2/signal_type.hpp>
 
 namespace Entity {
 
@@ -41,7 +43,7 @@ private:
     uint32_t m_id;
 };
 
-
+using mutex_type = boost::signals2::keywords::mutex_type<boost::signals2::dummy_mutex>;
 
 template <class EntityType>
 class SystemBase
@@ -51,9 +53,9 @@ public:
     {
     public:
         friend SystemBase;
-        using OnAddSignal     = typename boost::signals2::signal<void(EntityType)>;
-        using OnReserveSignal = boost::signals2::signal<void(std::size_t)>;
-        using OnEraseSignal   = typename boost::signals2::signal<void(EntityType)>;
+        using OnAddSignal     = typename boost::signals2::signal_type<void(EntityType),  mutex_type>::type;
+        using OnReserveSignal = typename boost::signals2::signal_type<void(std::size_t), mutex_type>::type;
+        using OnEraseSignal   = typename boost::signals2::signal_type<void(EntityType),  mutex_type>::type;
 
         ~Notifier() = default;
 

@@ -13,6 +13,11 @@ struct Data
 {
     sf::Vector2f pos;
     sf::Vector2f vel;
+
+    void update()
+    {
+        pos += vel;
+    }
 };
 
 using namespace Entity;
@@ -39,7 +44,7 @@ int main(int argc, char *argv[])
 {
     // Create the main window
     sf::RenderWindow window(sf::VideoMode(800, 600), "SFML window");
-
+    window.setFramerateLimit(30);
     SystemWithDeletion<Particle> sys;
     auto data   = makeProperty<Data>(sys);
     auto life   = makeProperty<uint8_t>(sys);
@@ -47,7 +52,7 @@ int main(int argc, char *argv[])
 
 
     std::random_device device;
-    std::uniform_real_distribution<float> dist{-1.0, 1.0};
+    std::uniform_real_distribution<float> dist{-10.0, 10.0};
     std::uniform_int_distribution<uint8_t> dist2{0, 100};
 
     sf::Font font;
@@ -63,16 +68,15 @@ int main(int argc, char *argv[])
 
     auto pos2vertexArray = [](sf::Vector2f pos, sf::Color color)
     {
-        ParticleContour vertices;
-        vertices[0].position = pos;
-        vertices[0].color    = color;
-        vertices[1].position = {pos.x+10.f, pos.y+10.f};
-        vertices[1].color    = color;
-        vertices[2] = vertices[1];
-        vertices[3].position = {pos.x+10.f, pos.y};
-        vertices[3].color    = color;
-        vertices[4] = vertices[3];
-        vertices[5] = vertices[0];
+        const ParticleContour vertices =
+        {
+            sf::Vertex{pos, color, {}},
+            sf::Vertex{{pos.x+10.f, pos.y+10.f}, color, {}},
+            sf::Vertex{{pos.x+10.f, pos.y+10.f}, color, {}},
+            sf::Vertex{{pos.x+10.f, pos.y}, color, {}},
+            sf::Vertex{{pos.x+10.f, pos.y}, color, {}},
+            sf::Vertex{pos, color, {}}
+        };
         return vertices;
     };
 
@@ -100,9 +104,9 @@ int main(int argc, char *argv[])
                     particles[i] = sys.add();
                 }
                 return particles;
-            }(10);
+            }(100);
             for(auto particle: particles)
-                data[particle]          = {position, {dist(device), -1.0}};
+                data[particle]          = {position, {dist(device), dist(device)}};
             for(auto particle: particles)
                 life[particle]          = 255 - dist2(device);
             for(auto particle: particles)
@@ -133,10 +137,7 @@ int main(int argc, char *argv[])
         toKill.resize(0);
 
         // Update position
-        ranges::for_each(data.asRange(), [](Data& data)
-        {
-            data.pos += data.vel;
-        });
+        ranges::for_each(data.asRange(), &Data::update);
 
         // Update shapes
         ranges::for_each(ranges::view::zip(view.property.asRange(), data.asRange(), life.asRange()), [&](std::tuple<ParticleContour&, const Data&, const uint8_t> tuple)
