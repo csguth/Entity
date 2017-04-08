@@ -1,6 +1,8 @@
 #include <iostream>
 #include "Graph.hpp"
 
+using namespace Example;
+
 int main(int, char *[])
 {
     {

@@ -8,6 +8,8 @@
 BOOST_STRONG_TYPEDEF(Entity::Base, Particle)
 
 #include <random>
+#include <chrono>
+using namespace std::chrono;
 
 struct Data
 {
@@ -37,14 +39,13 @@ struct ParticlesView : public sf::Drawable
     }
 };
 
-#include <chrono>
-using namespace std::chrono;
+
 
 int main(int argc, char *argv[])
 {
     // Create the main window
-    sf::RenderWindow window(sf::VideoMode(800, 600), "SFML window");
-    window.setFramerateLimit(30);
+    sf::RenderWindow window(sf::VideoMode::getFullscreenModes()[0], "SFML window");
+    //window.setFramerateLimit(30);
     SystemWithDeletion<Particle> sys;
     auto data   = makeProperty<Data>(sys);
     auto life   = makeProperty<uint8_t>(sys);
@@ -53,13 +54,15 @@ int main(int argc, char *argv[])
 
     std::random_device device;
     std::uniform_real_distribution<float> dist{-10.0, 10.0};
-    std::uniform_int_distribution<uint8_t> dist2{0, 100};
+    std::uniform_int_distribution<int> dist2{0, 100};
+	std::uniform_int_distribution<int> dist3{ 100, 255 };
 
     sf::Font font;
-    font.loadFromFile("/usr/share/qtcreator/fonts/SourceCodePro-Regular.ttf");
+    //font.loadFromFile("/usr/share/qtcreator/fonts/SourceCodePro-Regular.ttf");
+	font.loadFromFile("C:\\Windows\\\Fonts\\\Arial.ttf");
     sf::Text entityCount;
     entityCount.setFont(font);
-    entityCount.setFillColor(sf::Color::Red);
+    entityCount.setFillColor(sf::Color::Cyan);
 
     sf::Text fpsText;
     fpsText.setFont(font);
@@ -81,7 +84,7 @@ int main(int argc, char *argv[])
     };
 
     std::vector<Particle> toKill;
-    auto lastTick = high_resolution_clock::now();
+    auto lastTick = system_clock::now();
     while (window.isOpen())
     {
         // Process events
@@ -104,13 +107,13 @@ int main(int argc, char *argv[])
                     particles[i] = sys.add();
                 }
                 return particles;
-            }(100);
+            }(10000);
             for(auto particle: particles)
-                data[particle]          = {position, {dist(device), dist(device)}};
+                data[particle]          = {position, {dist(device), -2.0f*std::abs(dist(device))}};
             for(auto particle: particles)
                 life[particle]          = 255 - dist2(device);
             for(auto particle: particles)
-                view.property[particle] = pos2vertexArray(position, sf::Color::Blue);
+				view.property[particle] = pos2vertexArray(position, sf::Color {0, 0, 0, dist3(device)});
         }
         // Clear screen
         window.clear();
@@ -145,10 +148,10 @@ int main(int argc, char *argv[])
             ParticleContour& shape = std::get<0>(tuple);
             const Data& data                 = std::get<1>(tuple);
             const uint8_t life               = std::get<2>(tuple);
-            shape = pos2vertexArray(data.pos, sf::Color{255, 255-life, 0});
+            shape = pos2vertexArray(data.pos, sf::Color{255, 255-life, 0, shape[0].color.a});
         });
 
-        auto tick = high_resolution_clock::now();
+        auto tick = system_clock::now();
         auto timeSinceLastTick = static_cast<float>(duration_cast<nanoseconds>(tick-lastTick).count());
 
 

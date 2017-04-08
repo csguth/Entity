@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <functional>
+#include <algorithm>
 
 namespace Entity
 {
@@ -109,7 +110,7 @@ public:
         }
         else
         {
-            reserve(std::max(1ul, m_capacity*2));
+            reserve(std::max(static_cast<std::size_t>(1), m_capacity*2));
             resize(newSize);
         }
     }

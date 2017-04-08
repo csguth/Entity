@@ -1,8 +1,12 @@
 #ifndef GRAPH_HPP
 #define GRAPH_HPP
 
+#include <deque>
 #include <Entity/Property.hpp>
 #include <boost/serialization/strong_typedef.hpp>
+
+namespace Example
+{
 
 BOOST_STRONG_TYPEDEF(Entity::Base, Vertex)
 BOOST_STRONG_TYPEDEF(Entity::Base, Arc)
@@ -118,7 +122,7 @@ public:
     }
 };
 
-#include <deque>
+
 template<class Callback>
 void breadthFirstSearch(Digraph& graph, Vertex source, Callback&& cb)
 {
@@ -156,6 +160,8 @@ void breadthFirstSearch(Digraph& graph, Vertex source, Callback&& cb)
         }
         Q.pop_front();
     }
+}
+
 }
 
 #endif // GRAPH_HPP
