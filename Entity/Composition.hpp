@@ -84,20 +84,49 @@ public:
         m_nextSibling[child] = m_firstChild[parent];
         m_firstChild[parent] = child;
     }
-    auto children(ParentType parent)
-    {
-        std::vector<ChildType> children;
-        for(ChildType curr = m_firstChild[parent]; !(curr == ChildType{}); curr = nextSibling(curr))
+
+    class ChildrenView : public ranges::view_facade<ChildrenView> {
+        friend ranges::range_access;
+        const LeftMapped& mapped;
+        const ParentType parent;
+        struct cursor
         {
-            children.push_back(curr);
+            const LeftMapped& mapped;
+            ChildType current;
+            decltype(auto) read() const
+            {
+                return current;
+            }
+            void next()
+            {
+                current = mapped.nextSibling(current);
+            }
+            bool equal(ranges::default_sentinel) const {
+                return current == ChildType{};
+            }
+        };
+        cursor begin_cursor() {
+            return {mapped, mapped.firstChild(parent)};
         }
-        return children;
+    public:
+        ChildrenView() = default;
+        explicit ChildrenView(const LeftMapped& mapped, ParentType parent)
+          : mapped(mapped),
+            parent(parent)
+        {}
+    };
+
+    auto children(ParentType parent) const
+    {
+        return ChildrenView(*this, parent);
     }
 
 private:
     Property<ParentType, ChildType, ParentSystemType> m_firstChild;
     Property<ChildType, ChildType, ChildSystemType> m_nextSibling;
 };
+
+
 
 // BothMapped is a wrap for both Left and Right Mappings.
 template <typename ParentType, template <typename> class ParentSystemType, typename ChildType, template <typename> class ChildSystemType>

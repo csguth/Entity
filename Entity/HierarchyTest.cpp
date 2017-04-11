@@ -114,10 +114,10 @@ TEST_CASE("Range adaptors")
     leftMapped.addChild(parent0, childSystem.add());
     leftMapped.addChild(parent0, childSystem.add());
     leftMapped.addChild(parent1, childSystem.add());
-    const std::vector<Test::Child> parent0Children = leftMapped.children(parent0);
-    const std::vector<Test::Child> parent1Children = leftMapped.children(parent1);
-    CHECK(ranges::size(parent0Children) == 3);
-    CHECK(ranges::size(parent1Children) == 1);
+    ranges::for_each(leftMapped.children(parent0), [](Test::Child child)
+    {
+        std::cout << static_cast<Base>(child).id() << std::endl;
+    });
 }
 
 
