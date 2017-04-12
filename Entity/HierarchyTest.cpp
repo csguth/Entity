@@ -9,8 +9,8 @@ using namespace Entity;
 TEST_CASE("Composition 1-N")
 {
     {
-        auto parentSystem = System<Test::Parent>{};
-        auto childSystem  = System<Test::Child>{};
+        auto parentSystem = SystemWithDeletion<Test::Parent>{};
+        auto childSystem  = SystemWithDeletion<Test::Child>{};
         auto composition = makeComposition<Left>(parentSystem, childSystem);
         auto parent = parentSystem.add();
         auto child  = childSystem.add();
@@ -21,8 +21,8 @@ TEST_CASE("Composition 1-N")
         CHECK(composition.nextSibling(child) == child2);
     }
     {
-        auto parentSystem = System<Test::Parent>{};
-        auto childSystem  = System<Test::Child>{};
+        auto parentSystem = SystemWithDeletion<Test::Parent>{};
+        auto childSystem  = SystemWithDeletion<Test::Child>{};
         auto composition = makeComposition<Right>(parentSystem, childSystem);
         auto parent = parentSystem.add();
         auto parent2 = parentSystem.add();
@@ -35,8 +35,8 @@ TEST_CASE("Composition 1-N")
         CHECK(!(composition.parent(child) == composition.parent(child2)));
     }
     {
-        auto parentSystem = System<Test::Parent>{};
-        auto childSystem  = System<Test::Child>{};
+        auto parentSystem = SystemWithDeletion<Test::Parent>{};
+        auto childSystem  = SystemWithDeletion<Test::Child>{};
         auto composition = makeComposition<Both>(parentSystem, childSystem);
         auto parent = parentSystem.add();
         auto child  = childSystem.add();
@@ -56,8 +56,8 @@ TEST_CASE("Composition 1-N")
 TEST_CASE("Add child")
 {
     {
-        auto parentSystem = System<Test::Parent>{};
-        auto childSystem  = System<Test::Child>{};
+        auto parentSystem = SystemWithDeletion<Test::Parent>{};
+        auto childSystem  = SystemWithDeletion<Test::Child>{};
         auto composition = makeComposition<Left>(parentSystem, childSystem);
         auto parent = parentSystem.add();
         CHECK(composition.childrenSize(parent) == 0);
@@ -70,8 +70,8 @@ TEST_CASE("Add child")
         CHECK(composition.childrenSize(parent) == 2);
     }
     {
-        auto parentSystem = System<Test::Parent>{};
-        auto childSystem  = System<Test::Child>{};
+        auto parentSystem = SystemWithDeletion<Test::Parent>{};
+        auto childSystem  = SystemWithDeletion<Test::Child>{};
         auto composition = makeComposition<Right>(parentSystem, childSystem);
         auto parent = parentSystem.add();
         auto parent2 = parentSystem.add();
@@ -85,8 +85,8 @@ TEST_CASE("Add child")
         CHECK(composition.parent(child2) == parent2);
     }
     {
-        auto parentSystem = System<Test::Parent>{};
-        auto childSystem  = System<Test::Child>{};
+        auto parentSystem = SystemWithDeletion<Test::Parent>{};
+        auto childSystem  = SystemWithDeletion<Test::Child>{};
         auto composition = makeComposition<Both>(parentSystem, childSystem);
         auto parent = parentSystem.add();
         CHECK(composition.childrenSize(parent) == 0);
@@ -110,25 +110,70 @@ TEST_CASE("Add child")
 using namespace ranges::v3;
 TEST_CASE("Range adaptors")
 {
-    auto parentSystem = System<Test::Parent>{};
-    auto childSystem  = System<Test::Child>{};
+    auto parentSystem = SystemWithDeletion<Test::Parent>{};
+    auto childSystem  = SystemWithDeletion<Test::Child>{};
     auto parent0 = parentSystem.add();
     auto parent1 = parentSystem.add();
-    LeftMapped<Test::Parent, System, Test::Child, System> leftMapped(parentSystem, childSystem);
-    leftMapped.addChild(parent0, childSystem.add());
-    leftMapped.addChild(parent0, childSystem.add());
-    leftMapped.addChild(parent0, childSystem.add());
-    leftMapped.addChild(parent1, childSystem.add());
-
-    std::cout << parent0 << "'s Children: " << leftMapped.children(parent0) << '\n';
-//    std::cout << "Pair-by-Pair: " << view::zip(leftMapped.children(parent0) | view::take(leftMapped.childrenSize(parent0) - 1),
-//                                               leftMapped.children(parent0) | view::drop(1)) << '\n';
-    const std::vector<Test::Child> rng1 = leftMapped.children(parent0);
-    const std::vector<Test::Child> rng2 = leftMapped.children(parent1);
-    auto rng = view::cartesian_product(rng1, rng2);
-//    std::cout << "Cartesian Product: " << view::cartesian_product(rng1, rng2) << '\n';
-    std::cout << std::flush;
+    LeftMapped<Test::Parent, SystemWithDeletion, Test::Child, SystemWithDeletion> leftMapped(parentSystem, childSystem);
+    Test::Child child00, child01, child02, child10;
+    leftMapped.addChild(parent0, child00 = childSystem.add());
+    leftMapped.addChild(parent0, child01 = childSystem.add());
+    leftMapped.addChild(parent0, child02 = childSystem.add());
+    leftMapped.addChild(parent1, child10 = childSystem.add());
+    CHECK(ranges::count(leftMapped.children(parent0), child00) == 1);
+    CHECK(ranges::count(leftMapped.children(parent0), child01) == 1);
+    CHECK(ranges::count(leftMapped.children(parent0), child02) == 1);
+    CHECK(ranges::count(leftMapped.children(parent0), Test::Child{}) == 0);
+    CHECK(ranges::count(leftMapped.children(parent1), child10) == 1);
+    CHECK(ranges::count(leftMapped.children(parent1), Test::Child{}) == 0);
 }
 
+TEST_CASE("Strong composition")
+{
+    {
+        SystemWithDeletion<Test::Parent> parentSystem;
+        SystemWithDeletion<Test::Child> childSystem;
+        auto composition = makeComposition<Left>(parentSystem, childSystem);
+
+        const Test::Parent parent0 = parentSystem.add();
+        const Test::Parent parent1 = parentSystem.add();
+        const Test::Child child00 = childSystem.add();
+        const Test::Child child01 = childSystem.add();
+        const Test::Child child10 = childSystem.add();
+
+        composition.addChild(parent0, child00);
+        composition.addChild(parent0, child01);
+        composition.addChild(parent1, child10);
+
+        parentSystem.erase(parent0);
+
+        CHECK(childSystem.size() == 1);
+        CHECK(childSystem.alive(child10));
+        CHECK(!childSystem.alive(child00));
+        CHECK(!childSystem.alive(child01));
+
+        CHECK(ranges::count(composition.children(parent1), child10) == 1);
+    }
+
+    {
+        System<Test::Parent> parentSystem;
+        SystemWithDeletion<Test::Child> childSystem;
+        auto composition = makeComposition<Left>(parentSystem, childSystem);
+    }
+
+    {
+        System<Test::Parent> parentSystem;
+        System<Test::Child> childSystem;
+        auto composition = makeComposition<Left>(parentSystem, childSystem);
+    }
+    {
+//        It just makes sense if we can select between Strong or Weak composability.
+
+//        SystemWithDeletion<Test::Parent> parentSystem;
+//        System<Test::Child> childSystem;
+//        auto composition = makeComposition<Left>(parentSystem, childSystem);
+    }
+
+}
 
 

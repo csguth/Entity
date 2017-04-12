@@ -76,6 +76,10 @@ public:
     {
         return m_values.data();
     }
+    void disconnectOnErase()
+    {
+        m_onEraseConnection.disconnect();
+    }
 protected:
     void onAdd(KeyType)
     {
@@ -85,11 +89,13 @@ protected:
     {
         m_values.reserve(size);
     }
+public:
     void onErase(KeyType en)
     {
         std::swap(m_values.back(), m_values[m_indexer->lookup(en)]);
         m_values.pop_back();
     }
+protected:
     void connectSignals()
     {
         if(auto notifier = m_notifier.lock())

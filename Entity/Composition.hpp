@@ -52,6 +52,26 @@ private:
     Property<ChildType, ParentType, ChildSystemType> m_parent;
 };
 
+// SFINAE to connect the signal for erasing child entity >
+template <typename ParentType, template <typename> class ParentSystemType, typename ChildType, template <typename> class ChildSystemType>
+auto connectOnEraseIfPossible(int, boost::signals2::scoped_connection& connection, std::shared_ptr<typename ParentSystemType<ParentType>::Notifier>& notifier, ChildSystemType<ChildType>& child, Property<ParentType, ChildType, ParentSystemType>& firstChild, Property<ChildType, ChildType, ChildSystemType>& nextSibling) -> decltype((void)&ChildSystemType<ChildType>::erase, void())
+{
+    connection = std::move(notifier->connectOnErase([&](ParentType en)
+    {
+        for(ChildType curr{firstChild[en]}, next; curr != ChildType{}; curr = next)
+        {
+            next = nextSibling[curr];
+            child.erase(curr);
+        }
+        firstChild.onErase(en);
+    }));
+}
+
+template <typename ParentType, template <typename> class ParentSystemType, typename ChildType, template <typename> class ChildSystemType>
+auto connectOnEraseIfPossible(char, boost::signals2::scoped_connection&, std::shared_ptr<typename ParentSystemType<ParentType>::Notifier>&, ChildSystemType<ChildType>&, Property<ParentType, ChildType, ParentSystemType>&, Property<ChildType, ChildType, ChildSystemType>&) -> decltype(void(), void())
+{}
+// <
+
 // A composition should inherit Left Mapped when it is necessary O(1) mapping from parent to children.
 template <typename ParentType, template <typename> class ParentSystemType, typename ChildType, template <typename> class ChildSystemType>
 class LeftMapped
@@ -62,7 +82,9 @@ public:
         m_firstChild(makeProperty<ChildType>(parent)),
         m_nextSibling(makeProperty<ChildType>(child))
     {
-
+        m_firstChild.disconnectOnErase();
+        auto notifier = parent.notifier().lock();
+        connectOnEraseIfPossible(0, m_onEraseConnection, notifier, child, m_firstChild, m_nextSibling);
     }
     ChildType firstChild(ParentType parent) const
     {
@@ -148,11 +170,11 @@ public:
     {
         return ChildrenView(*this, parent);
     }
-
 private:
     Property<ParentType, std::size_t, ParentSystemType> m_childrenSize;
     Property<ParentType, ChildType, ParentSystemType> m_firstChild;
     Property<ChildType, ChildType, ChildSystemType> m_nextSibling;
+    boost::signals2::scoped_connection m_onEraseConnection;
 };
 
 
