@@ -5,8 +5,14 @@
 #include <Entity/Property.hpp>
 
 #include <boost/serialization/strong_typedef.hpp>
-BOOST_STRONG_TYPEDEF(Entity::Base, Particle)
-
+struct Particle: Entity::Base<Particle>
+{
+    using Entity::Base<Particle>::Base;
+    static std::string name()
+    {
+        return "Particle";
+    }
+};
 #include <random>
 
 struct Data

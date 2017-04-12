@@ -2,10 +2,24 @@
 #define GRAPH_HPP
 
 #include <Entity/Property.hpp>
-#include <boost/serialization/strong_typedef.hpp>
 
-BOOST_STRONG_TYPEDEF(Entity::Base, Vertex)
-BOOST_STRONG_TYPEDEF(Entity::Base, Arc)
+struct Vertex: Entity::Base<Vertex>
+{
+    using Entity::Base<Vertex>::Base;
+    static std::string name()
+    {
+        return "Vertex";
+    }
+};
+
+struct Arc: Entity::Base<Arc>
+{
+    using Entity::Base<Arc>::Base;
+    static std::string name()
+    {
+        return "Arc";
+    }
+};
 
 class Digraph
 {
@@ -20,7 +34,6 @@ public:
         m_source(m_arcs),
         m_target(m_arcs)
     {
-
     }
     Vertex addVertex()
     {

@@ -2,11 +2,12 @@
 #include <catch.hpp>
 #include <algorithm>
 #include "Property.hpp"
+#include "test.hpp"
 
 using namespace Entity;
 TEST_CASE("Property")
 {
-    System<Base> sys;
+    System<Test::TestEntity> sys;
     auto prop = makeProperty<double>(sys);
     CHECK(prop.empty());
     CHECK(prop.size() == sys.size());
@@ -14,17 +15,17 @@ TEST_CASE("Property")
 
 TEST_CASE("Add After")
 {
-    System<Base> sys;
+    System<Test::TestEntity> sys;
     auto prop = makeProperty<double>(sys);
-    const Base en = sys.add();
+    const Test::TestEntity en = sys.add();
     CHECK(prop.size() == sys.size());
     CHECK(prop.size() == 1);
 }
 
 TEST_CASE("Add Before")
 {
-    System<Base> sys;
-    const Base en = sys.add();
+    System<Test::TestEntity> sys;
+    const Test::TestEntity en = sys.add();
     auto prop = makeProperty<double>(sys);
     CHECK(prop.size() == sys.size());
     CHECK(prop.size() == 1);
@@ -32,7 +33,7 @@ TEST_CASE("Add Before")
 
 TEST_CASE("Capacity After")
 {
-    System<Base> sys;
+    System<Test::TestEntity> sys;
     auto prop = makeProperty<double>(sys);
     sys.reserve(1024);
     CHECK(sys.capacity() == prop.capacity());
@@ -41,7 +42,7 @@ TEST_CASE("Capacity After")
 
 TEST_CASE("Capacity Before")
 {
-    System<Base> sys;
+    System<Test::TestEntity> sys;
     sys.reserve(1024);
     auto prop = makeProperty<double>(sys);
     CHECK(sys.capacity() == prop.capacity());
@@ -50,7 +51,7 @@ TEST_CASE("Capacity Before")
 
 TEST_CASE("Scoped Connections")
 {
-    System<Base> sys;
+    System<Test::TestEntity> sys;
     {
         auto prop = makeProperty<double>(sys);
         sys.add();
@@ -64,25 +65,25 @@ using namespace ranges;
 #include <iostream>
 TEST_CASE("As Range")
 {
-    System<Base> sys;
+    System<Test::TestEntity> sys;
     auto prop = makeProperty<double>(sys);
     prop[sys.add()] = 42.0;
     prop[sys.add()] = 84.0;
     auto range = prop.asRange();
-    for_each(view::zip(sys.asRange(), prop.asRange()), [](std::pair<Base, double&> el){ // Should modify
+    for_each(view::zip(sys.asRange(), prop.asRange()), [](std::pair<Test::TestEntity, double&> el){ // Should modify
         static double count = 1.0;
         el.second = 66.0 * count;
         count += 1.0;
     });
 
-    for_each(view::zip(sys.asRange(), prop.asRange()), [](std::pair<Base, double> el){ // Should not modify
+    for_each(view::zip(sys.asRange(), prop.asRange()), [](std::pair<Test::TestEntity, double> el){ // Should not modify
         static double count = 1.0;
         el.second = 77.0 * count;
         count += 1.0;
     });
 
     std::vector<double> result;
-    for_each(view::zip(sys.asRange(), prop.asRange()), [&result](std::pair<Base, double> el){
+    for_each(view::zip(sys.asRange(), prop.asRange()), [&result](std::pair<Test::TestEntity, double> el){
         result.push_back(el.second);
     });
 
@@ -95,7 +96,7 @@ TEST_CASE("As Range")
 TEST_CASE("Deletion")
 {
     {
-        SystemWithDeletion<Base> sys;
+        SystemWithDeletion<Test::TestEntity> sys;
         auto prop = makeProperty<double>(sys);
         auto en = sys.add();
         CHECK(!prop.empty());
@@ -103,7 +104,7 @@ TEST_CASE("Deletion")
         CHECK(prop.empty());
     }
     {
-        SystemWithDeletion<Base> sys;
+        SystemWithDeletion<Test::TestEntity> sys;
         auto prop = makeProperty<double>(sys);
         auto en0 = sys.add();
         auto en1 = sys.add();
@@ -121,10 +122,10 @@ TEST_CASE("Deletion")
 TEST_CASE("Independent Lifetimes")
 {
     {
-        Property<Base, double, System> prop;
-        std::vector<Base> entities;
+        Property<Test::TestEntity, double, System> prop;
+        std::vector<Test::TestEntity> entities;
         {
-            System<Base> sys;
+            System<Test::TestEntity> sys;
             prop = makeProperty<double>(sys);
             entities.push_back(sys.add());
             entities.push_back(sys.add());
@@ -138,10 +139,10 @@ TEST_CASE("Independent Lifetimes")
         CHECK(prop[entities[2]] == 3.0);
     }
     {
-        Property<Base, double, SystemWithDeletion> prop;
-        std::vector<Base> entities;
+        Property<Test::TestEntity, double, SystemWithDeletion> prop;
+        std::vector<Test::TestEntity> entities;
         {
-            SystemWithDeletion<Base> sys;
+            SystemWithDeletion<Test::TestEntity> sys;
             prop = makeProperty<double>(sys);
             entities.push_back(sys.add());
             entities.push_back(sys.add());
@@ -158,24 +159,24 @@ TEST_CASE("Independent Lifetimes")
 
 TEST_CASE("Move")
 {
-    auto createProp = [](SystemWithDeletion<Base>& theSys)
+    auto createProp = [](SystemWithDeletion<Test::TestEntity>& theSys)
     {
         return makeProperty<double>(theSys);
     };
-    SystemWithDeletion<Base> sys;
+    SystemWithDeletion<Test::TestEntity> sys;
     auto en0 = sys.add();
     auto en1 = sys.add();
     auto en2 = sys.add();
 
     // Move assignment
-    Property<Base, double, SystemWithDeletion> prop;
+    Property<Test::TestEntity, double, SystemWithDeletion> prop;
     prop = createProp(sys);
     prop[en0] = 42.0;
     prop[en1] = 24.0;
     prop[en2] = 84.0;
 
     // Move construction
-    Property<Base, double, SystemWithDeletion> prop2 = createProp(sys);
+    Property<Test::TestEntity, double, SystemWithDeletion> prop2 = createProp(sys);
     CHECK(prop.size() == 3);
 
     // Copy assignment
@@ -188,7 +189,7 @@ TEST_CASE("Move")
     CHECK(prop.size() == 4);
 
     // Move assigment
-    Property<Base, double, SystemWithDeletion> prop3;
+    Property<Test::TestEntity, double, SystemWithDeletion> prop3;
     prop3 = std::move(prop2);
     CHECK(prop3[en0] == 42.0);
     CHECK(prop3[en1] == 24.0);
@@ -198,7 +199,7 @@ TEST_CASE("Move")
     CHECK(prop.size() == 5);
 
     // Copy construction
-    Property<Base, double, SystemWithDeletion> prop4(prop3);
+    Property<Test::TestEntity, double, SystemWithDeletion> prop4(prop3);
     CHECK(prop4[en0] == 42.0);
     CHECK(prop4[en1] == 24.0);
     CHECK(prop4[en2] == 84.0);

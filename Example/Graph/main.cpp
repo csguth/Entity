@@ -18,7 +18,7 @@ int main(int, char *[])
         digraph.addArc(v3, v4);
         breadthFirstSearch(digraph, v0, [&digraph](Vertex v0)
         {
-            std::cout << "Vertex " << static_cast<Entity::Base>(v0).id() << " has degree in " << digraph.inDegree(v0) << " out " << digraph.outDegree(v0) << std::endl;
+            std::cout << v0 << " has degree in " << digraph.inDegree(v0) << " out " << digraph.outDegree(v0) << std::endl;
         });
     }
 
@@ -28,9 +28,9 @@ int main(int, char *[])
     auto v2 = graph.addVertex();
     graph.addEdge(v0, v1);
     graph.addEdge(v1, v2);
-    std::cout << "Vertex " << static_cast<Entity::Base>(v0).id() << " has degree " << graph.degree(v0) << std::endl;
-    std::cout << "Vertex " << static_cast<Entity::Base>(v1).id() << " has degree " << graph.degree(v1) << std::endl;
-    std::cout << "Vertex " << static_cast<Entity::Base>(v2).id() << " has degree " << graph.degree(v2) << std::endl;
+    std::cout << v0 << " has degree " << graph.degree(v0) << std::endl;
+    std::cout << v1 << " has degree " << graph.degree(v1) << std::endl;
+    std::cout << v2 << " has degree " << graph.degree(v2) << std::endl;
 
     return 0;
 }

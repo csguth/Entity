@@ -17,12 +17,12 @@ public:
         friend SystemWithDeletion;
         std::size_t lookup(EntityType en) const
         {
-            return m_index[static_cast<Base>(en).id()];
+            return m_index[en.id()];
         }
     private:
         void put(EntityType en, std::size_t index)
         {
-            m_index[static_cast<Base>(en).id()] = index;
+            m_index[en.id()] = index;
         }
         std::size_t allocate()
         {

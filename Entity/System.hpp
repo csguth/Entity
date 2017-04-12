@@ -8,6 +8,7 @@
 
 namespace Entity {
 
+template<class Derived>
 class Base
 {
 public:
@@ -31,6 +32,10 @@ public:
     {
         return m_id == other.m_id;
     }
+    bool operator!=(const Base& other) const
+    {
+        return m_id != other.m_id;
+    }
     uint32_t id() const
     {
         return m_id;
@@ -38,6 +43,10 @@ public:
     bool operator<(const Base& other) const
     {
         return m_id < other.m_id;
+    }
+    friend std::ostream& operator<<(std::ostream& out, const Base<Derived>& this_)
+    {
+        return out << Derived::name() << "(" << this_.m_id << ")";
     }
 private:
     uint32_t m_id;
@@ -142,7 +151,7 @@ public:
     {
         std::size_t lookup(EntityType en) const
         {
-            return static_cast<Base>(en).id();
+            return en.id();
         }
     };
 
@@ -163,7 +172,7 @@ public:
     }
     bool alive(EntityType entity) const
     {
-        return static_cast<Base>(entity).id() < this->m_entities.size();
+        return entity.id() < this->m_entities.size();
     }
     std::shared_ptr<Indexer> indexer() const
     {

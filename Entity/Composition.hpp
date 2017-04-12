@@ -58,6 +58,7 @@ class LeftMapped
 {
 public:
     LeftMapped(ParentSystemType<ParentType>& parent, ChildSystemType<ChildType>& child):
+        m_childrenSize(makeProperty<std::size_t>(parent)),
         m_firstChild(makeProperty<ChildType>(parent)),
         m_nextSibling(makeProperty<ChildType>(child))
     {
@@ -81,47 +82,75 @@ public:
     }
     void addChild(ParentType parent, ChildType child)
     {
+        ++m_childrenSize[parent];
         m_nextSibling[child] = m_firstChild[parent];
         m_firstChild[parent] = child;
     }
-
-    class ChildrenView : public ranges::view_facade<ChildrenView> {
+    std::size_t childrenSize(ParentType parent) const
+    {
+        return m_childrenSize[parent];
+    }
+    class ChildrenView
+      : public ranges::view_facade<ChildrenView> {
+    private:
         friend ranges::range_access;
-        const LeftMapped& mapped;
-        const ParentType parent;
+        LeftMapped* m_mapped;
+        ranges::semiregular_t<ChildType> m_current;
         struct cursor
         {
-            const LeftMapped& mapped;
-            ChildType current;
-            decltype(auto) read() const
-            {
-                return current;
-            }
+        private:
+            ChildrenView* m_range;
+        public:
+            cursor() = default;
+            explicit cursor(ChildrenView& range)
+                : m_range(&range)
+            {}
             void next()
             {
-                current = mapped.nextSibling(current);
+                m_range->next();
             }
+            ChildType& read() const noexcept
+            {
+                return m_range->current();
+            }
+
             bool equal(ranges::default_sentinel) const {
-                return current == ChildType{};
+                return m_range->current() == ChildType{};
             }
         };
-        cursor begin_cursor() {
-            return {mapped, mapped.firstChild(parent)};
+        void next()
+        {
+            m_current = m_mapped->nextSibling(m_current);
         }
+        cursor begin_cursor()
+        {
+            return cursor{*this};
+        }
+        ChildrenView(LeftMapped& mapped, ChildType *)
+            : m_mapped(&mapped), m_current{}
+        {}
+        ChildrenView(LeftMapped& mapped, ranges::semiregular<ChildType> *)
+            : m_mapped(&mapped), m_current{ranges::in_place}
+        {}
     public:
         ChildrenView() = default;
-        explicit ChildrenView(const LeftMapped& mapped, ParentType parent)
-          : mapped(mapped),
-            parent(parent)
-        {}
+        ChildrenView(LeftMapped& mapped, ParentType parent)
+            : m_mapped(&mapped),
+              m_current(mapped.firstChild(parent))
+        { }
+        ChildType& current()
+        {
+            return m_current;
+        }
     };
 
-    auto children(ParentType parent) const
+    auto children(ParentType parent)
     {
         return ChildrenView(*this, parent);
     }
 
 private:
+    Property<ParentType, std::size_t, ParentSystemType> m_childrenSize;
     Property<ParentType, ChildType, ParentSystemType> m_firstChild;
     Property<ChildType, ChildType, ChildSystemType> m_nextSibling;
 };
