@@ -48,13 +48,13 @@ public:
     {
         m_parent[child] = parent;
     }
-private:
+protected:
     Property<ChildType, ParentType, ChildSystemType> m_parent;
 };
 
 // SFINAE to connect the signal for erasing child entity >
 template <typename ParentType, template <typename> class ParentSystemType, typename ChildType, template <typename> class ChildSystemType>
-auto connectOnEraseIfPossible(int, boost::signals2::scoped_connection& connection, std::shared_ptr<typename ParentSystemType<ParentType>::Notifier>& notifier, ChildSystemType<ChildType>& child, Property<ParentType, ChildType, ParentSystemType>& firstChild, Property<ChildType, ChildType, ChildSystemType>& nextSibling) -> decltype((void)&ChildSystemType<ChildType>::erase, void())
+auto connectOnEraseIfPossibleForLeftMapped(int, boost::signals2::scoped_connection& connection, std::shared_ptr<typename ParentSystemType<ParentType>::Notifier>& notifier, ChildSystemType<ChildType>& child, Property<ParentType, ChildType, ParentSystemType>& firstChild, Property<ChildType, ChildType, ChildSystemType>& nextSibling) -> decltype((void)&ChildSystemType<ChildType>::erase, void())
 {
     connection = std::move(notifier->connectOnErase([&](ParentType en)
     {
@@ -68,7 +68,7 @@ auto connectOnEraseIfPossible(int, boost::signals2::scoped_connection& connectio
 }
 
 template <typename ParentType, template <typename> class ParentSystemType, typename ChildType, template <typename> class ChildSystemType>
-auto connectOnEraseIfPossible(char, boost::signals2::scoped_connection&, std::shared_ptr<typename ParentSystemType<ParentType>::Notifier>&, ChildSystemType<ChildType>&, Property<ParentType, ChildType, ParentSystemType>&, Property<ChildType, ChildType, ChildSystemType>&) -> decltype(void(), void())
+auto connectOnEraseIfPossibleForLeftMapped(char, boost::signals2::scoped_connection&, std::shared_ptr<typename ParentSystemType<ParentType>::Notifier>&, ChildSystemType<ChildType>&, Property<ParentType, ChildType, ParentSystemType>&, Property<ChildType, ChildType, ChildSystemType>&) -> decltype(void(), void())
 {}
 // <
 
@@ -84,7 +84,7 @@ public:
     {
         m_firstChild.disconnectOnErase();
         auto notifier = parent.notifier().lock();
-        connectOnEraseIfPossible(0, m_onEraseConnection, notifier, child, m_firstChild, m_nextSibling);
+        connectOnEraseIfPossibleForLeftMapped(0, m_onEraseConnection, notifier, child, m_firstChild, m_nextSibling);
     }
     ChildType firstChild(ParentType parent) const
     {
@@ -112,11 +112,16 @@ public:
     {
         return m_childrenSize[parent];
     }
+    void disconnectOnErase()
+    {
+        m_onEraseConnection.disconnect();
+    }
+
     class ChildrenView
       : public ranges::view_facade<ChildrenView> {
     private:
         friend ranges::range_access;
-        LeftMapped* m_mapped;
+        const LeftMapped* m_mapped;
         ranges::semiregular_t<ChildType> m_current;
         struct cursor
         {
@@ -135,9 +140,13 @@ public:
             {
                 return m_range->current();
             }
-
-            bool equal(ranges::default_sentinel) const {
+            bool equal(ranges::default_sentinel) const
+            {
                 return m_range->current() == ChildType{};
+            }
+            bool equal(const cursor& other) const
+            {
+                return read() == other.read();
             }
         };
         void next()
@@ -148,15 +157,9 @@ public:
         {
             return cursor{*this};
         }
-        ChildrenView(LeftMapped& mapped, ChildType *)
-            : m_mapped(&mapped), m_current{}
-        {}
-        ChildrenView(LeftMapped& mapped, ranges::semiregular<ChildType> *)
-            : m_mapped(&mapped), m_current{ranges::in_place}
-        {}
     public:
         ChildrenView() = default;
-        ChildrenView(LeftMapped& mapped, ParentType parent)
+        ChildrenView(const LeftMapped& mapped, ParentType parent)
             : m_mapped(&mapped),
               m_current(mapped.firstChild(parent))
         { }
@@ -166,18 +169,38 @@ public:
         }
     };
 
-    auto children(ParentType parent)
+    auto children(ParentType parent) const
     {
         return ChildrenView(*this, parent);
     }
-private:
+protected:
+    boost::signals2::scoped_connection m_onEraseConnection;
     Property<ParentType, std::size_t, ParentSystemType> m_childrenSize;
     Property<ParentType, ChildType, ParentSystemType> m_firstChild;
     Property<ChildType, ChildType, ChildSystemType> m_nextSibling;
-    boost::signals2::scoped_connection m_onEraseConnection;
 };
 
+// SFINAE to connect the signal for erasing child entity >
+template <typename ParentType, template <typename> class ParentSystemType, typename ChildType, template <typename> class ChildSystemType>
+auto connectOnEraseIfPossibleForBothMapped(int, boost::signals2::scoped_connection& connection, std::shared_ptr<typename ParentSystemType<ParentType>::Notifier>& notifier, ChildSystemType<ChildType>& child, Property<ParentType, ChildType, ParentSystemType>& firstChild, Property<ChildType, ChildType, ChildSystemType>& nextSibling, Property<ChildType, ParentType, ChildSystemType>& parent) -> decltype((void)&ChildSystemType<ChildType>::erase, void())
+{
+    connectOnEraseIfPossibleForLeftMapped(0, connection, notifier, child, firstChild, nextSibling);
+}
 
+template <typename ParentType, template <typename> class ParentSystemType, typename ChildType, template <typename> class ChildSystemType>
+auto connectOnEraseIfPossibleForBothMapped(char, boost::signals2::scoped_connection& connection, std::shared_ptr<typename ParentSystemType<ParentType>::Notifier>& notifier, ChildSystemType<ChildType>& child, Property<ParentType, ChildType, ParentSystemType>& firstChild, Property<ChildType, ChildType, ChildSystemType>& nextSibling, Property<ChildType, ParentType, ChildSystemType>& parent) -> decltype(void(), void())
+{
+    connection = std::move(notifier->connectOnErase([&](ParentType en)
+    {
+        for(ChildType curr{firstChild[en]}, next; curr != ChildType{}; curr = next)
+        {
+            next = nextSibling[curr];
+            parent[curr] = ParentType{};
+        }
+        firstChild.onErase(en);
+    }));
+}
+// <
 
 // BothMapped is a wrap for both Left and Right Mappings.
 template <typename ParentType, template <typename> class ParentSystemType, typename ChildType, template <typename> class ChildSystemType>
@@ -189,15 +212,52 @@ public:
     BothMapped(ParentSystemType<ParentType>& parent, ChildSystemType<ChildType>& child):
         LeftParent(parent, child),
         RightParent(parent, child)
-
     {
-
+        LeftParent::disconnectOnErase();
+        {
+            auto notifier = parent.notifier().lock();
+            connectOnEraseIfPossibleForBothMapped(0, this->m_onEraseConnection, notifier, child, this->m_firstChild, this->m_nextSibling, this->m_parent);
+        }
+        this->m_nextSibling.disconnectOnErase();
+        this->m_parent.disconnectOnErase();
+        auto notifier = child.notifier().lock();
+        m_onEraseChildConnection = std::move(notifier->connectOnErase([&](ChildType child)
+        {
+            auto theParent = this->parent(child);
+            if(parent.alive(theParent))
+            {
+                --this->m_childrenSize[theParent];
+                this->parent(child, ParentType{});
+                if(child == this->firstChild(theParent))
+                {
+                    this->firstChild(theParent, this->nextSibling(child));
+                }
+                else
+                {
+                    auto prev = this->firstChild(theParent);
+                    auto curr = this->nextSibling(prev);
+                    while(curr != child && curr != ChildType{})
+                    {
+                        prev = curr;
+                        curr = this->nextSibling(curr);
+                    }
+                    if(curr == child)
+                    {
+                        this->nextSibling(prev, this->nextSibling(curr));
+                    }
+                }
+            }
+            this->m_nextSibling.onErase(child);
+            this->m_parent.onErase(child);
+        }));
     }
     void addChild(ParentType parent, ChildType child)
     {
        LeftParent::addChild(parent, child);
        RightParent::addChild(parent, child);
     }
+private:
+    boost::signals2::scoped_connection m_onEraseChildConnection;
 };
 
 // This Conditional helps to select the right Mapping according to the passed Selector.
@@ -241,6 +301,36 @@ Composition<Selector, ParentType, ParentSystemType, ChildType, ChildSystemType> 
 {
     return {parentSystem, childSystem};
 }
+
+template<typename EntityType>
+class WeakAdapter
+{
+public:
+    using Indexer = typename SystemWithDeletion<EntityType>::Indexer;
+    using Notifier = typename SystemWithDeletion<EntityType>::Notifier;
+    WeakAdapter(SystemWithDeletion<EntityType>& system):
+        m_system(system)
+    {
+    }
+    auto indexer()
+    {
+        return m_system.indexer();
+    }
+    auto notifier()
+    {
+        return m_system.notifier();
+    }
+    auto capacity() const
+    {
+        return m_system.capacity();
+    }
+    auto size() const
+    {
+        return m_system.size();
+    }
+private:
+    SystemWithDeletion<EntityType>& m_system;
+};
 
 
 }
