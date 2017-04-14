@@ -112,6 +112,11 @@ TEST_CASE("BFS")
     auto names = d.makeVertexProperty<std::string>();
     names = (d.vertices() | mapToId | mapIdToName);
 
+    auto mapToName = view::transform([&](auto vertex)
+    {
+        return names[vertex];
+    });
+
     auto e0 = d.addArc(v0, v1);
     auto e1 = d.addArc(v1, v2);
     auto e2 = d.addArc(v0, v3);
@@ -139,4 +144,7 @@ TEST_CASE("BFS")
     });
 
     CHECK(equal(level.asRange(), {0, 1, 2, 1, 2, 2, 3}));
+
+    BreadthFirstView bfs{d, v0};
+    std::cout << view::zip(view::zip(bfs | mapToName, bfs), bfs | mapToLevel) << std::endl;
 }

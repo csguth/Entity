@@ -188,6 +188,95 @@ void breadthFirstSearch(Digraph& graph, Vertex source, Callback&& cb)
     }
 }
 
+class BreadthFirstView
+  : public ranges::view_facade<BreadthFirstView> {
+private:
+    friend ranges::range_access;
+    Digraph* m_digraph;
+    ranges::semiregular_t<Vertex> m_source;
+    ranges::semiregular_t<Vertex> m_current;
+    struct cursor
+    {
+    private:
+        BreadthFirstView* m_range;
+    public:
+        cursor() = default;
+        explicit cursor(BreadthFirstView& range)
+            : m_range(&range)
+        {}
+        void next()
+        {
+            m_range->next();
+        }
+        Vertex& read() const noexcept
+        {
+            return m_range->current();
+        }
+        bool equal(ranges::default_sentinel) const
+        {
+            return m_range->current() == Vertex{};
+        }
+        bool equal(const cursor& other) const
+        {
+            return read() == other.read();
+        }
+    };
+    void next()
+    {
+        if(m_Q.empty())
+        {
+            m_current = Vertex{};
+        }
+        else
+        {
+            auto&& front = m_Q.front();
+            m_current = front;
+            m_colors[front] = Color::Black;
+            ranges::for_each(m_digraph->outArcs(front), [&](Arc a)
+            {
+                const auto target = m_digraph->target(a);
+                assert(m_colors[target] != Color::Black);
+                if(m_colors[target] == Color::White)
+                {
+                    m_colors[target] = Color::Grey;
+                    m_Q.push_back(target);
+                }
+            });
+            m_Q.pop_front();
+        }
+       //
+    }
+    cursor begin_cursor()
+    {
+        ranges::fill(m_colors.asRange(), Color::White);
+        m_Q.push_back(m_source);
+        cursor c{*this};
+        c.next();
+        return c;
+    }
+public:
+    BreadthFirstView() = default;
+    BreadthFirstView(Digraph& digraph, Vertex source)
+        : m_digraph(&digraph),
+          m_source(source),
+          m_colors(digraph.makeVertexProperty<Color>())
+    {
+    }
+    Vertex& current()
+    {
+        return m_current;
+    }
+private:
+    enum class Color
+    {
+        Black,
+        Grey,
+        White
+    };
+    decltype(m_digraph->makeVertexProperty<Color>()) m_colors;
+    std::deque<Vertex> m_Q;
+};
+
 }
 }
 
