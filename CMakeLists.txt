@@ -12,6 +12,6 @@ set_property(TARGET boost PROPERTY
 INCLUDE_DIRECTORIES(3rdParty/catch/include)
 
 
-add_subdirectory(Entity)
-add_subdirectory(Example/Graph)
+add_subdirectory(Entity/Core)
+add_subdirectory(Entity/Graph)
 add_subdirectory(Example/Particle)

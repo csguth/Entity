@@ -1,8 +1,8 @@
 #include "Particle.hpp"
 
 #include <SFML/Graphics.hpp>
-#include <Entity/SystemWithDeletion.hpp>
-#include <Entity/Property.hpp>
+#include <Entity/Core/SystemWithDeletion.hpp>
+#include <Entity/Core/Property.hpp>
 
 #include <boost/serialization/strong_typedef.hpp>
 struct Particle: Entity::Base<Particle>

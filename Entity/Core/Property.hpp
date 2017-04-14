@@ -80,6 +80,11 @@ public:
     {
         m_onEraseConnection.disconnect();
     }
+    Property& operator=(auto range)
+    {
+        ranges::copy(range, m_values.begin());
+        return *this;
+    }
 protected:
     void onAdd(KeyType)
     {
