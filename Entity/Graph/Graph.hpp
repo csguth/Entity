@@ -3,6 +3,7 @@
 
 #include <Entity/Core/Property.hpp>
 #include <Entity/Core/Composition.hpp>
+#include <deque>
 
 namespace Entity
 {
@@ -120,7 +121,6 @@ public:
     {
         return m_arcs.asRange();
     }
-
 private:
     System<Vertex> m_vertices;
     System<Arc>    m_arcs;
@@ -153,40 +153,6 @@ public:
         return Digraph::inDegree(u);
     }
 };
-
-#include <deque>
-template<class Callback>
-void breadthFirstSearch(Digraph& graph, Vertex source, Callback&& cb)
-{
-    using namespace ranges::v3;
-    enum class Color
-    {
-        Black,
-        Grey,
-        White
-    };
-    auto colors = graph.makeVertexProperty<Color>();
-    fill(colors.asRange(), Color::White);
-    std::deque<Vertex> Q;
-    Q.push_back(std::move(source));
-    while(!Q.empty())
-    {
-        auto&& front = Q.front();
-        cb(front);
-        colors[front] = Color::Black;
-        for_each(graph.outArcs(front), [&](Arc a)
-        {
-            const auto target = graph.target(a);
-            assert(colors[target] != Color::Black);
-            if(colors[target] == Color::White)
-            {
-                colors[target] = Color::Grey;
-                Q.push_back(target);
-            }
-        });
-        Q.pop_front();
-    }
-}
 
 class BreadthFirstView
   : public ranges::view_facade<BreadthFirstView> {
@@ -244,7 +210,6 @@ private:
             });
             m_Q.pop_front();
         }
-       //
     }
     cursor begin_cursor()
     {
@@ -277,6 +242,41 @@ private:
     std::deque<Vertex> m_Q;
 };
 
+auto bfs(Digraph& d, Vertex source)
+{
+    return BreadthFirstView(d, source);
+}
+
+
+}
+}
+
+namespace ranges
+{
+namespace view
+{
+    /*
+     * struct Node
+     * {
+     *      Digraph& graph;
+     *      Vertex u;
+     *      bool canReach(Vertex v) const
+     *      {
+     *          return count(view::bfs(graph, v), v) > 0;
+     *      }
+     *      auto neighborhood() const
+     *      {
+     *          return view::concat(graph.outArcs(u) | view::transform(target),
+     *                              graph.inArcs(u) | view::transform(source));
+     *      }
+     * };
+     */
+
+    template <typename GraphType, typename SourceVertex>
+    auto bfs(GraphType& graph, SourceVertex source)
+    {
+        return Entity::Graph::BreadthFirstView(graph, source);
+    }
 }
 }
 

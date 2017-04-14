@@ -98,25 +98,6 @@ TEST_CASE("BFS")
     auto v4 = d.addVertex();
     auto v5 = d.addVertex();
     auto v6 = d.addVertex();
-
-    auto mapToId = view::transform([&](auto vertex)
-    {
-        return vertex.id();
-    });
-
-    auto mapIdToName = view::transform([&](auto id)
-    {
-        return std::string("v") + std::to_string(id);
-    });
-
-    auto names = d.makeVertexProperty<std::string>();
-    names = (d.vertices() | mapToId | mapIdToName);
-
-    auto mapToName = view::transform([&](auto vertex)
-    {
-        return names[vertex];
-    });
-
     auto e0 = d.addArc(v0, v1);
     auto e1 = d.addArc(v1, v2);
     auto e2 = d.addArc(v0, v3);
@@ -124,27 +105,6 @@ TEST_CASE("BFS")
     auto e4 = d.addArc(v3, v5);
     auto e5 = d.addArc(v5, v6);
 
-    auto level = d.makeVertexProperty<int>();
-    fill(level.asRange(), 0);
-
-    auto mapToSource = view::transform([&](auto arc)
-    {
-        return d.source(arc);
-    });
-
-    auto mapToLevel = view::transform([&](auto v)
-    {
-        return level[v];
-    });
-
-    breadthFirstSearch(d, v0, [&](Vertex v)
-    {
-        if(v == v0) return;
-        level[v] = max(d.inArcs(v) | mapToSource | mapToLevel) + 1;
-    });
-
-    CHECK(equal(level.asRange(), {0, 1, 2, 1, 2, 2, 3}));
-
-    BreadthFirstView bfs{d, v0};
-    std::cout << view::zip(view::zip(bfs | mapToName, bfs), bfs | mapToLevel) << std::endl;
+    CHECK(count(bfs(d, v0), v6) > 0);
+    CHECK(count(bfs(d, v5), v0) == 0);
 }
