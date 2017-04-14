@@ -145,4 +145,23 @@ Property<KeyType, ValueType, SystemType> makeProperty(SystemType<KeyType>& syste
 
 }
 
+namespace ranges
+{
+namespace v3
+{
+namespace view
+{
+    template <typename ValueType, typename KeyType, template <typename> class SystemType>
+    auto get(const Entity::Property<KeyType, ValueType, SystemType>& property)
+    {
+        return transform([&](KeyType key)
+        {
+            return property[key];
+        });
+    }
+
+}
+}
+}
+
 #endif // PROPERTY_H

@@ -61,7 +61,7 @@ TEST_CASE("Scoped Connections")
     CHECK_NOTHROW(sys.add());
 }
 
-using namespace ranges;
+using namespace ranges::v3;
 #include <iostream>
 TEST_CASE("As Range")
 {
@@ -203,4 +203,34 @@ TEST_CASE("Move")
     CHECK(prop4[en0] == 42.0);
     CHECK(prop4[en1] == 24.0);
     CHECK(prop4[en2] == 84.0);
+}
+
+#include <cmath>
+TEST_CASE("Range-v3 utilities")
+{
+    auto createProp = [](SystemWithDeletion<Test::TestEntity>& theSys)
+    {
+        return makeProperty<double>(theSys);
+    };
+    SystemWithDeletion<Test::TestEntity> sys;
+    auto en0 = sys.add();
+    auto en1 = sys.add();
+    auto en2 = sys.add();
+
+    auto prop = createProp(sys);
+    prop[en0] = 1.0;
+    prop[en1] = 2.0;
+    prop[en2] = 3.0;
+
+    const std::vector<double> reversed = (sys.asRange() | view::reverse | view::get(prop));
+    CHECK(equal(reversed, {3.0, 2.0, 1.0}));
+
+
+    auto squared = [](double x)
+    {
+        return x*x;
+    };
+    prop = (prop.asRange() | view::reverse | view::transform(squared));
+    CHECK(equal(prop.asRange(), {1.0, 4.0, 9.0}));
+
 }
