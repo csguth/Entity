@@ -48,6 +48,13 @@ public:
     {
         m_parent[child] = parent;
     }
+    void removeChild(ParentType parent, ChildType child)
+    {
+        if(this->parent(child) == parent)
+        {
+            this->parent(child, ParentType{});
+        }
+    }
 protected:
     Property<ChildType, ParentType, ChildSystemType> m_parent;
 };
@@ -116,7 +123,28 @@ public:
     {
         m_onEraseConnection.disconnect();
     }
-
+    void removeChild(ParentType parent, ChildType child)
+    {
+        --this->m_childrenSize[parent];
+        if(child == this->firstChild(parent))
+        {
+            this->firstChild(parent, this->nextSibling(child));
+        }
+        else
+        {
+            auto prev = this->firstChild(parent);
+            auto curr = this->nextSibling(prev);
+            while(curr != child && curr != ChildType{})
+            {
+                prev = curr;
+                curr = this->nextSibling(curr);
+            }
+            if(curr == child)
+            {
+                this->nextSibling(prev, this->nextSibling(curr));
+            }
+        }
+    }
     class ChildrenView
       : public ranges::view_facade<ChildrenView> {
     private:
@@ -226,26 +254,7 @@ public:
             auto theParent = this->parent(child);
             if(parent.alive(theParent))
             {
-                --this->m_childrenSize[theParent];
-                this->parent(child, ParentType{});
-                if(child == this->firstChild(theParent))
-                {
-                    this->firstChild(theParent, this->nextSibling(child));
-                }
-                else
-                {
-                    auto prev = this->firstChild(theParent);
-                    auto curr = this->nextSibling(prev);
-                    while(curr != child && curr != ChildType{})
-                    {
-                        prev = curr;
-                        curr = this->nextSibling(curr);
-                    }
-                    if(curr == child)
-                    {
-                        this->nextSibling(prev, this->nextSibling(curr));
-                    }
-                }
+               removeChild(theParent, child);
             }
             this->m_nextSibling.onErase(child);
             this->m_parent.onErase(child);
@@ -256,6 +265,12 @@ public:
        LeftParent::addChild(parent, child);
        RightParent::addChild(parent, child);
     }
+    void removeChild(ParentType parent, ChildType child)
+    {
+        RightParent::removeChild(parent, child);
+        LeftParent::removeChild(parent, child);
+    }
+
 private:
     boost::signals2::scoped_connection m_onEraseChildConnection;
 };
@@ -293,6 +308,10 @@ public:
     void addChild(ParentType parent, ChildType child)
     {
         Parent::addChild(parent, child);
+    }
+    void removeChild(ParentType parent, ChildType child)
+    {
+        Parent::removeChild(parent, child);
     }
 };
 

@@ -10,6 +10,7 @@ TEST_CASE("Empty")
     const System<Test::TestEntity> sys;
     CHECK(sys.empty());
     CHECK(sys.size() == 0);
+    CHECK(!sys.alive(Test::TestEntity{}));
 }
 
 TEST_CASE("Add")

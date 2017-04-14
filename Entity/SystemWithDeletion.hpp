@@ -59,7 +59,7 @@ public:
     }
     bool alive(EntityType entity) const
     {
-        return m_indexer->lookup(entity) != std::numeric_limits<std::size_t>::max();
+        return entity != EntityType{} && m_indexer->lookup(entity) != std::numeric_limits<std::size_t>::max();
     }
     std::shared_ptr<Indexer> indexer() const
     {
