@@ -72,6 +72,10 @@ public:
     {
         return ranges::make_iterator_range(m_values.begin(), m_values.end());
     }
+    auto asRange() const
+    {
+        return ranges::make_iterator_range(m_values.cbegin(), m_values.cend());
+    }
     const ValueType* data() const
     {
         return m_values.data();

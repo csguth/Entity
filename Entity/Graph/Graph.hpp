@@ -32,7 +32,8 @@ struct Arc: Base<Arc>
 class Digraph
 {
 public:
-
+    using VertexType = Vertex;
+    using ArcType = Arc;
     Digraph():
         m_vertices(),
         m_arcs(),
@@ -271,7 +272,6 @@ namespace view
      *      }
      * };
      */
-
     template <typename GraphType, typename SourceVertex>
     auto bfs(GraphType& graph, SourceVertex source)
     {

@@ -1,4 +1,4 @@
-add_library(Graph STATIC Graph.hpp)
+add_library(Graph STATIC Graph.hpp Dijkstra.hpp)
 set_target_properties(Graph PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(Graph Entity)
 target_include_directories(Graph PUBLIC ${PROJECT_SOURCE_DIR}/3rdParty/range-v3/include)
