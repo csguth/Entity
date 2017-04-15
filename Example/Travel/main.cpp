@@ -40,7 +40,7 @@ std::ostream& operator << (std::ostream& os, common_pair<T, U> const& p) {
 
 int main(int, char *[])
 {
-    Digraph d;
+    SmartDigraph d;
     using namespace ranges::v3;
 
     auto cities = d.makeVertexProperty<City>();
@@ -106,12 +106,12 @@ int main(int, char *[])
     addTravel("Copenhagen", "London/Stansted Return", {{"easyJet", Travel::Company::Type::Flight}, 2221});
     addTravel("London/Stansted Return", "Cambridge Return", {{"Greater Anglia", Travel::Company::Type::Train}, 1010});
 
-    Dijkstra<Digraph> dijkstra(d, weigths);
+    Dijkstra<SmartDigraph> dijkstra(d, weigths);
     dijkstra.run(getOrAddCity("Cambridge"));
 
     auto target = getOrAddCity("Cambridge Return");
 
-    ShortestPathView<Digraph> shortestPath{dijkstra, target};
+    ShortestPathView<SmartDigraph> shortestPath{dijkstra, target};
     const std::vector<std::string> output = (shortestPath | cityCompanyAndPrice);
 
     std::cout << "Best Trip (Total = " << formatPrice(shortestPath.weight()) << "): " << std::endl;

@@ -29,18 +29,22 @@ struct Arc: Base<Arc>
     }
 };
 
-class Digraph
+
+template <template <typename> class SystemType>
+class DigraphBase
 {
 public:
     using VertexType = Vertex;
     using ArcType = Arc;
-    Digraph():
+    DigraphBase():
         m_vertices(),
         m_arcs(),
         m_inArcs(makeComposition<Both>(m_vertices, m_arcs)),
         m_outArcs(makeComposition<Both>(m_vertices, m_arcs))
     {
     }
+    virtual ~DigraphBase()
+    {}
     std::size_t order() const
     {
         return m_vertices.size();
@@ -122,9 +126,9 @@ public:
     {
         return m_arcs.asRange();
     }
-private:
-    System<Vertex> m_vertices;
-    System<Arc>    m_arcs;
+protected:
+    SystemType<Vertex> m_vertices;
+    SystemType<Arc>    m_arcs;
     decltype(makeComposition<Both>(m_vertices, m_arcs)) m_inArcs;
     decltype(makeComposition<Both>(m_vertices, m_arcs)) m_outArcs;
 
@@ -139,27 +143,86 @@ public:
     }
 };
 
-class Graph: private Digraph
+class SmartDigraph: public DigraphBase<System>
 {
 public:
-    using Digraph::Digraph;
+    using Parent = DigraphBase<System>;
+    using Parent::VertexType;
+    using Parent::ArcType;
+};
+
+class Digraph: public DigraphBase<SystemWithDeletion>
+{
+public:
+    using Parent = DigraphBase<SystemWithDeletion>;
+    using Parent::VertexType;
+    using Parent::ArcType;
+    using Parent::DigraphBase;
+    void erase(Vertex v)
+    {
+        m_vertices.erase(v);
+    }
+    void erase(Arc uv)
+    {
+        m_arcs.erase(uv);
+    }
+};
+
+class SmartGraph: private SmartDigraph
+{
+public:
+    using Parent = SmartDigraph;
+    using Parent::Parent;
+    using Parent::VertexType;
+    using Parent::ArcType;
+    using Parent::DigraphBase;
+    using Parent::addVertex;
     using Edge = std::pair<Arc, Arc>;
-    using Digraph::addVertex;
     Edge addEdge(Vertex u, Vertex v)
     {
-        return {Digraph::addArc(u, v), Digraph::addArc(v, u)};
+        return {Parent::addArc(u, v), Parent::addArc(v, u)};
     }
     uint32_t degree(Vertex u) const
     {
-        return Digraph::inDegree(u);
+        return Parent::inDegree(u);
+    }
+};
+
+class Graph: private Digraph
+{
+public:
+    using Parent = Digraph;
+    using Parent::Parent;
+    using Parent::VertexType;
+    using Parent::ArcType;
+    using Parent::DigraphBase;
+    using Parent::addVertex;
+    using Edge = std::pair<Arc, Arc>;
+    Edge addEdge(Vertex u, Vertex v)
+    {
+        return {Parent::addArc(u, v), Parent::addArc(v, u)};
+    }
+    uint32_t degree(Vertex u) const
+    {
+        return Parent::inDegree(u);
+    }
+    void erase(Vertex u)
+    {
+        Parent::erase(u);
+    }
+    void erase(Edge e)
+    {
+        Parent::erase(e.first);
+        Parent::erase(e.second);
     }
 };
 
 class BreadthFirstView
-  : public ranges::view_facade<BreadthFirstView> {
+  : public ranges::view_facade<BreadthFirstView>
+{
 private:
     friend ranges::range_access;
-    Digraph* m_digraph;
+    SmartDigraph* m_SmartDigraph;
     ranges::semiregular_t<Vertex> m_source;
     ranges::semiregular_t<Vertex> m_current;
     struct cursor
@@ -199,9 +262,9 @@ private:
             auto&& front = m_Q.front();
             m_current = front;
             m_colors[front] = Color::Black;
-            ranges::for_each(m_digraph->outArcs(front), [&](Arc a)
+            ranges::for_each(m_SmartDigraph->outArcs(front), [&](Arc a)
             {
-                const auto target = m_digraph->target(a);
+                const auto target = m_SmartDigraph->target(a);
                 assert(m_colors[target] != Color::Black);
                 if(m_colors[target] == Color::White)
                 {
@@ -222,10 +285,10 @@ private:
     }
 public:
     BreadthFirstView() = default;
-    BreadthFirstView(Digraph& digraph, Vertex source)
-        : m_digraph(&digraph),
+    BreadthFirstView(SmartDigraph& SmartDigraph, Vertex source)
+        : m_SmartDigraph(&SmartDigraph),
           m_source(source),
-          m_colors(digraph.makeVertexProperty<Color>())
+          m_colors(SmartDigraph.makeVertexProperty<Color>())
     {
     }
     Vertex& current()
@@ -239,11 +302,11 @@ private:
         Grey,
         White
     };
-    decltype(m_digraph->makeVertexProperty<Color>()) m_colors;
+    decltype(m_SmartDigraph->makeVertexProperty<Color>()) m_colors;
     std::deque<Vertex> m_Q;
 };
 
-auto bfs(Digraph& d, Vertex source)
+auto bfs(SmartDigraph& d, Vertex source)
 {
     return BreadthFirstView(d, source);
 }
@@ -259,7 +322,7 @@ namespace view
     /*
      * struct Node
      * {
-     *      Digraph& graph;
+     *      SmartDigraph& graph;
      *      Vertex u;
      *      bool canReach(Vertex v) const
      *      {

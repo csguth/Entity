@@ -121,6 +121,10 @@ private:
         {
             return m_view->current() == typename GraphType::ArcType{};
         }
+        bool equal(const cursor& other) const
+        {
+            return m_view->current() == other.m_view->current();
+        }
     };
     void next()
     {
