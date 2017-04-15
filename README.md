@@ -27,7 +27,6 @@ git submodule update --init --recursive
 mkdir Build && cd Build
 cmake ..
 make -j
-./
 ```
 ### 3. Run the tests:
 ```
