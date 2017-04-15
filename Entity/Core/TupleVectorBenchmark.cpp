@@ -1,6 +1,5 @@
 #include <iostream>
 
-#include "TupleVectorBenchmark.hpp"
 #include "TupleVector.hpp"
 
 template <uint32_t N, class Callable>
