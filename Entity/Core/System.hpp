@@ -54,7 +54,7 @@ private:
 
 using mutex_type = boost::signals2::keywords::mutex_type<boost::signals2::dummy_mutex>;
 
-template <class EntityType>
+template <class EntityType, template <typename> class BaseType>
 class SystemBase
 {
 public:
@@ -87,27 +87,13 @@ public:
     };
 
     SystemBase():
-        m_notifier(std::make_shared<Notifier>())
+        m_notifier(std::make_shared<Notifier>()),
+        m_next(0)
     {
 
     }
     virtual ~SystemBase() = default;
-    constexpr bool empty() const
-    {
-        return m_entities.empty();
-    }
-    constexpr std::size_t size() const
-    {
-        return m_entities.size();
-    }
-    constexpr std::size_t capacity() const
-    {
-        return m_entities.capacity();
-    }
-    auto asRange() const
-    {
-        return ranges::make_iterator_range(m_entities.begin(), m_entities.end());
-    }
+
     std::weak_ptr<Notifier> notifier() const
     {
         return {m_notifier};
@@ -124,29 +110,59 @@ public:
     {
         return m_notifier->connectOnErase(slot);
     }
-
-protected:
-    void notifyAdd()
-    {
-        m_notifier->m_onAdd(m_entities.back());
-    }
-    void notifyReserve(std::size_t size)
+    void reserve(std::size_t size)
     {
         m_notifier->m_onReserve(size);
+        static_cast<BaseType<EntityType>*>(this)->doReserve(size);
     }
+    EntityType add()
+    {
+        auto result = m_next;
+        m_notifier->m_onAdd(result);
+        static_cast<BaseType<EntityType>*>(this)->doAdd();
+        m_next = EntityType(m_next.id() + 1);
+        return result;
+    }
+    constexpr std::size_t capacity() const
+    {
+        return static_cast<const BaseType<EntityType>*>(this)->getCapacity();
+    }
+    constexpr std::size_t size() const
+    {
+       return static_cast<const BaseType<EntityType>*>(this)->getSize();
+    }
+    constexpr bool empty() const
+    {
+        return size() == 0;
+    }
+    bool alive(EntityType entity) const
+    {
+        return static_cast<const BaseType<EntityType>*>(this)->isAlive(entity);
+    }
+    auto indexer() const
+    {
+        return static_cast<const BaseType<EntityType>*>(this)->getIndexer();
+    }
+    auto asRange() const
+    {
+        return static_cast<const BaseType<EntityType>*>(this)->getRange();
+    }
+
+protected:
     void notifyErase(EntityType en)
     {
         m_notifier->m_onErase(en);
     }
 
-    std::vector<EntityType>   m_entities;
     std::shared_ptr<Notifier> m_notifier;
+    EntityType m_next;
 };
 
 template <class EntityType>
-class System: public SystemBase<EntityType>
+class System: public SystemBase<EntityType, System>
 {
 public:
+    friend SystemBase<EntityType, System>;
     struct Indexer
     {
         std::size_t lookup(EntityType en) const
@@ -155,31 +171,42 @@ public:
         }
     };
 
-    System()
+    System():
+        SystemBase<EntityType, System>::SystemBase(),
+        m_capacity(0)
     {
 
     }
-    EntityType add()
+
+protected:
+    void doAdd() {}
+    void doReserve(std::size_t capacity)
     {
-        this->m_entities.emplace_back(this->size());
-        this->notifyAdd();
-        return this->m_entities.back();
+        m_capacity = capacity;
     }
-    void reserve(std::size_t size)
+    constexpr std::size_t getSize() const
     {
-        this->notifyReserve(size);
-        this->m_entities.reserve(size);
+        return this->m_next.id();
     }
-    bool alive(EntityType entity) const
+    bool isAlive(EntityType entity) const
     {
-        return entity.id() < this->m_entities.size();
+        return entity.id() < this->m_next.id();
     }
-    std::shared_ptr<Indexer> indexer() const
+    std::shared_ptr<Indexer> getIndexer() const
     {
         static std::shared_ptr<Indexer> staticIndexer{std::make_shared<Indexer>()};
         return staticIndexer;
     }
+    auto getRange() const
+    {
+        return ranges::view::iota(static_cast<std::size_t>(0), this->m_next.id()) | ranges::view::transform([](auto id){ return EntityType{id}; });
+    }
+    std::size_t getCapacity() const
+    {
+        return std::max(getSize(), m_capacity);
+    }
 private:
+    std::size_t m_capacity;
 };
 
 }

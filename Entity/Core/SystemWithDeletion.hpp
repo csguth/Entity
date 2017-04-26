@@ -7,10 +7,10 @@ namespace Entity
 {
 
 template <class EntityType>
-class SystemWithDeletion: public SystemBase<EntityType>
+class SystemWithDeletion: public SystemBase<EntityType, SystemWithDeletion>
 {
 public:
-
+    friend SystemBase<EntityType, SystemWithDeletion>;
     class Indexer
     {
     public:
@@ -33,40 +33,59 @@ public:
         std::vector<std::size_t> m_index;
     };
 
-    SystemWithDeletion():
+    SystemWithDeletion() :
+        SystemBase<EntityType, SystemWithDeletion>(),
         m_indexer(std::make_shared<Indexer>())
     {
 
-    }
-    EntityType add()
-    {
-        auto newIndex = m_indexer->allocate();
-        this->m_entities.emplace_back(newIndex);
-        this->notifyAdd();
-        m_indexer->put(this->m_entities.back(), this->m_entities.size()-1);
-        return this->m_entities.back();
     }
     void erase(EntityType entity)
     {
         this->notifyErase(entity);
         const std::size_t index = m_indexer->lookup(entity);
-        EntityType& theEntity   = this->m_entities[index];
-        EntityType& last        = this->m_entities.back();
+        EntityType& theEntity   = m_entities[index];
+        EntityType& last        = m_entities.back();
         m_indexer->put(last, index);
         m_indexer->put(entity, std::numeric_limits<std::size_t>::max());
         std::swap(theEntity, last);
-        this->m_entities.pop_back();
+        m_entities.pop_back();
     }
-    bool alive(EntityType entity) const
+
+protected:
+    constexpr std::size_t getSize() const
+    {
+        return m_entities.size();
+    }
+    auto getRange() const
+    {
+        return ranges::make_iterator_range(m_entities.begin(), m_entities.end());
+    }
+    void doReserve(std::size_t size)
+    {
+        m_entities.reserve(size);
+    }
+    void doAdd()
+    {
+        auto newIndex = m_indexer->allocate();
+        m_entities.emplace_back(newIndex);
+        m_indexer->put(m_entities.back(), m_entities.size()-1);
+    }
+    bool isAlive(EntityType entity) const
     {
         return entity != EntityType{} && m_indexer->lookup(entity) != std::numeric_limits<std::size_t>::max();
     }
-    std::shared_ptr<Indexer> indexer() const
+    std::shared_ptr<Indexer> getIndexer() const
     {
         return m_indexer;
     }
+    std::size_t getCapacity() const
+    {
+        return m_entities.capacity();
+    }
+
 private:
     std::shared_ptr<Indexer> m_indexer;
+    std::vector<EntityType>  m_entities;
 };
 
 }
