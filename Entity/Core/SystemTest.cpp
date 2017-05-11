@@ -76,7 +76,6 @@ TEST_CASE("As Range")
 {
     System<Test::TestEntity> sys;
     const std::array<Test::TestEntity, 3> entities{{sys.add(), sys.add(), sys.add()}};
-    CHECK(sys.asRange().size() == entities.size());
     auto range   = sys.asRange();
     auto lastTwo = sys.asRange() | view::drop(1);
     auto last    = sys.asRange() | view::drop(2);
@@ -150,5 +149,50 @@ TEST_CASE("Indexer")
         SystemWithDeletion<Test::TestEntity> sys2;
         auto indexer2 = sys2.indexer();
         CHECK(indexer2.get() != indexer.get());
+    }
+}
+
+
+#include "KeyWrapper.hpp"
+TEST_CASE("Key Wrapper/ Empty")
+{
+    System<Test::TestEntity> sys;
+    auto keyWrapper = makeKeyWrapper<std::string>(sys);
+    CHECK(!keyWrapper.has("Entity"));
+    REQUIRE_THROWS(keyWrapper.at("Entity"));
+    CHECK(sys.size() == 0);
+}
+
+TEST_CASE("Key Wrapper/ Add")
+{
+    System<Test::TestEntity> sys;
+    auto keyWrapper = makeKeyWrapper<std::string>(sys);
+    auto entity = keyWrapper.addOrGet("Entity");
+    CHECK(sys.size() == 1);
+    CHECK(keyWrapper.key(entity) == "Entity");
+    CHECK(keyWrapper.has("Entity"));
+    CHECK(keyWrapper.at("Entity") == entity);
+    auto entity2 = keyWrapper.addOrGet("Entity");
+    CHECK(sys.size() == 1);
+    CHECK(entity == entity2);
+}
+
+TEST_CASE("Key Wrapper/ Deletion")
+{
+   {
+        SystemWithDeletion<Test::TestEntity> sys;
+        auto keyWrapper = makeKeyWrapper<std::string>(sys);
+        auto entity = keyWrapper.addOrGet("Entity");
+        sys.erase(entity);
+        CHECK(!keyWrapper.has("Entity"));
+    }
+    {
+         SystemWithDeletion<Test::TestEntity> sys;
+         auto keyWrapper = makeKeyWrapper<std::string>(sys);
+         auto entity = keyWrapper.addOrGet("Entity");
+         sys.erase(entity);
+         auto entity2 = keyWrapper.addOrGet("Entity");
+         CHECK(keyWrapper.has("Entity"));
+         CHECK(entity != entity2);
     }
 }
