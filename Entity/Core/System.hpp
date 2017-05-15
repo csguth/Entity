@@ -12,11 +12,11 @@ template<class Derived>
 class Base
 {
 public:
-    Base() : m_id(std::numeric_limits<uint32_t>::max())
+    Base() : m_id(std::numeric_limits<std::size_t>::max())
     {
 
     }
-    Base(uint32_t id) : m_id(id)
+    Base(std::size_t id) : m_id(id)
     {
 
     }
@@ -36,7 +36,7 @@ public:
     {
         return m_id != other.m_id;
     }
-    uint32_t id() const
+    std::size_t id() const
     {
         return m_id;
     }
@@ -49,7 +49,7 @@ public:
         return out << Derived::name() << "(" << this_.m_id << ")";
     }
 private:
-    uint32_t m_id;
+    std::size_t m_id;
 };
 
 using mutex_type = boost::signals2::keywords::mutex_type<boost::signals2::dummy_mutex>;

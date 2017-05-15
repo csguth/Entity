@@ -17,7 +17,7 @@ public:
         friend SystemWithDeletion;
         std::size_t lookup(EntityType en) const
         {
-            return m_index[en.id()];
+            return m_index.at(en.id());
         }
     private:
         void put(EntityType en, std::size_t index)
