@@ -51,6 +51,20 @@ public:
 private:
     std::size_t m_id;
 };
+}
+
+#define ENTITY_ENTITY_DECLARATION(__name) \
+struct __name : Entity::Base<__name>\
+{\
+    using Base<__name>::Base;\
+    static std::string name()\
+    {\
+        return #__name;\
+    }\
+};
+
+namespace Entity
+{
 
 using mutex_type = boost::signals2::keywords::mutex_type<boost::signals2::dummy_mutex>;
 
@@ -186,11 +200,11 @@ protected:
     }
     constexpr std::size_t getSize() const
     {
-        return this->m_next.id();
+        return getIndexer()->lookup(this->m_next);
     }
     bool isAlive(EntityType entity) const
     {
-        return entity.id() < this->m_next.id();
+        return entity.id() < getSize();
     }
     std::shared_ptr<Indexer> getIndexer() const
     {
@@ -199,7 +213,7 @@ protected:
     }
     auto getRange() const
     {
-        return ranges::view::iota(static_cast<std::size_t>(0), this->m_next.id()) | ranges::view::transform([](auto id){ return EntityType{id}; });
+        return ranges::view::iota(static_cast<std::size_t>(0), getSize()) | ranges::view::transform([](auto id){ return EntityType{id}; });
     }
     std::size_t getCapacity() const
     {
