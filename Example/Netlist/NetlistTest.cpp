@@ -2,6 +2,7 @@
 #include <catch.hpp>
 
 #include "Netlist.hpp"
+#include "Verilog.hpp"
 
 struct Decl
 {
@@ -42,60 +43,7 @@ struct SimpleFixture
 
 void print(Netlist& nl)
 {
-    ranges::for_each(nl.moduleDecls(), [&](auto decl)
-    {
-        using namespace ranges;
-        auto getNameWithoutParentName = [&](auto el)
-        {
-            auto str = nl.name(el);
-            return str.substr(str.find_last_of('.') + 1);
-        };
-
-        auto name = view::transform(getNameWithoutParentName);
-
-        auto prepend = [](std::string prefix)
-        {
-            return view::transform([=](auto str2)
-            {
-                return prefix + str2;
-            });
-        };
-
-        auto append = [](std::string suffix)
-        {
-            return view::transform([=](auto str2)
-            {
-                return str2 + suffix;
-            });
-        };
-
-        auto instAndName = view::transform([&](auto inst)
-        {
-            return nl.name(nl.decl(inst)) + " " + getNameWithoutParentName(inst);
-        });
-
-        std::cout << "module " << nl.name(decl) << " (";
-        auto rng = view::concat((nl.inputPorts(decl) | name),
-                                (nl.outputPorts(decl) | name));
-        ranges::copy(view::intersperse(rng, ", "),
-                     ostream_iterator<std::string>(std::cout));
-        std::cout << ")\n\n";
-        auto inputPorts = nl.inputPorts(decl) | name | prepend("input ") | append(";");
-        auto outputPorts = nl.outputPorts(decl) | name | prepend("output ") | append(";");
-        ranges::copy(view::intersperse(inputPorts, "\n"),
-                     ostream_iterator<std::string>(std::cout));
-        std::cout << "\n\n";
-        ranges::copy(view::intersperse(outputPorts, "\n"),
-                     ostream_iterator<std::string>(std::cout));
-        std::cout << "\n\n";
-        if (nl.instsSize(decl))
-        {
-            ranges::copy(view::intersperse(nl.insts(decl) | instAndName, "\n"),
-                         ostream_iterator<std::string>(std::cout));
-            std::cout << "\n\n";
-        }
-        std::cout << "endmodule\n";
-    });
+    std::cout << Verilog(nl) << std::endl;
 }
 
 TEST_CASE_METHOD(SimpleFixture, "Add module decl")
