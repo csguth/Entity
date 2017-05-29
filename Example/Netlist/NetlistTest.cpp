@@ -41,9 +41,11 @@ struct SimpleFixture
 
 #include <iostream>
 
-void print(Netlist& nl)
+void print(Netlist& nl, std::string name)
 {
-    std::cout << Verilog(nl) << std::endl;
+//    std::cout << "# TEST " << name << "#\n";
+//    std::cout << Verilog(nl).indent(2) << std::endl;
+//    std::cout << "# TEST " << name << " END #\n";
 }
 
 TEST_CASE_METHOD(SimpleFixture, "Add module decl")
@@ -64,7 +66,7 @@ TEST_CASE_METHOD(SimpleFixture, "Add module decl")
     CHECK(nl.addOrGetWire(simple.module, "out") == simple.outn);
     CHECK(nl.topLevel() == simple.module);
 
-    print(nl);
+    print(nl, "Add module decl");
 }
 
 TEST_CASE_METHOD(SimpleFixture, "Add module inst")
@@ -75,7 +77,7 @@ TEST_CASE_METHOD(SimpleFixture, "Add module inst")
     CHECK(nl.name(u1) == "simple.u1");
     CHECK(nl.parent(u1) == simple.module);
 
-    print(nl);
+    print(nl, "Add module inst");
 }
 
 TEST_CASE("Hierarchical")
@@ -97,7 +99,37 @@ TEST_CASE("Hierarchical")
     CHECK(nl.name(inst) == "top.inst");
     CHECK(nl.parent(inst) == nl.topLevel());
 
-    print(nl);
+    print(nl, "Hierarchical");
 }
 
+TEST_CASE("Intersperse out")
+{
+    std::stringstream out;
+    Views::intersperseOut(std::vector<std::string>{"1", "2", "3"}, ",", out);
+    CHECK(out.str() == "1,2,3");
+}
+
+TEST_CASE("Verilog: Format input port")
+{
+//    Netlist nl;
+//    auto top = nl.addOrGetModuleDecl("top");
+//    nl.addOrGetInputPort(top, "in");
+//    std::cout << nl.inputPorts(top) | Verilog::formatInputPorts(nl) << std::endl;
+////    CHECK(output == "input in;");
+}
+
+//TEST_CASE("Verilog inputs")
+//{
+//    Netlist nl;
+//    auto top = nl.addOrGetModuleDecl("top");
+//    nl.addOrGetInputPort(top, "in");
+//    nl.addOrGetOutputPort(top, "out");
+//    std::stringstream out;
+//    out << Verilog::formatInputPorts(nl, nl.topLevel(), Verilog::Indent{0});
+//    auto golden = std::string{
+//        "input in;\n"
+//        "output out;"
+//    };
+//    CHECK(out.str() == golden);
+//}
 

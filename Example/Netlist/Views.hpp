@@ -52,6 +52,13 @@ auto instAndName(Netlist& nl)
     });
 }
 
+template <typename RangeType, typename SeparatorType, typename StreamType>
+auto intersperseOut(RangeType range, SeparatorType sep, StreamType& stream) -> StreamType&
+{
+    ranges::copy(ranges::view::intersperse(range, sep), ranges::ostream_iterator<std::string>(stream));
+    return stream;
+}
+
 }
 
 #endif // VIEWS_HPP
