@@ -123,52 +123,58 @@ TEST_CASE("4 bit adder")
     auto fullAdderS = nl.addOrGetOutputPort(fullAdderDecl, "S");
     auto fullAdderCout = nl.addOrGetOutputPort(fullAdderDecl, "Cout");
     auto fourBitAdderDecl = nl.addOrGetModuleDecl("ADDER4");
-    std::array<MappedPort, 4> fourBitAdderA
+    std::array<Wire, 4> A
     {
-        nl.addOrGetInputPort(fourBitAdderDecl, "A[0]"),
-        nl.addOrGetInputPort(fourBitAdderDecl, "A[1]"),
-        nl.addOrGetInputPort(fourBitAdderDecl, "A[2]"),
-        nl.addOrGetInputPort(fourBitAdderDecl, "A[3]")
+        nl.wire(nl.addOrGetInputPort(fourBitAdderDecl, "A[0]")),
+        nl.wire(nl.addOrGetInputPort(fourBitAdderDecl, "A[1]")),
+        nl.wire(nl.addOrGetInputPort(fourBitAdderDecl, "A[2]")),
+        nl.wire(nl.addOrGetInputPort(fourBitAdderDecl, "A[3]"))
     };
-    std::array<MappedPort, 4> fourBitAdderB
+    std::array<Wire, 4> B
     {
-        nl.addOrGetInputPort(fourBitAdderDecl, "B[0]"),
-        nl.addOrGetInputPort(fourBitAdderDecl, "B[1]"),
-        nl.addOrGetInputPort(fourBitAdderDecl, "B[2]"),
-        nl.addOrGetInputPort(fourBitAdderDecl, "B[3]")
+        nl.wire(nl.addOrGetInputPort(fourBitAdderDecl, "B[0]")),
+        nl.wire(nl.addOrGetInputPort(fourBitAdderDecl, "B[1]")),
+        nl.wire(nl.addOrGetInputPort(fourBitAdderDecl, "B[2]")),
+        nl.wire(nl.addOrGetInputPort(fourBitAdderDecl, "B[3]"))
     };
-    std::array<MappedPort, 4> fourBitAdderS
+    std::array<Wire, 4> S
     {
-        nl.addOrGetOutputPort(fourBitAdderDecl, "S[0]"),
-        nl.addOrGetOutputPort(fourBitAdderDecl, "S[1]"),
-        nl.addOrGetOutputPort(fourBitAdderDecl, "S[2]"),
-        nl.addOrGetOutputPort(fourBitAdderDecl, "S[3]")
+        nl.wire(nl.addOrGetOutputPort(fourBitAdderDecl, "S[0]")),
+        nl.wire(nl.addOrGetOutputPort(fourBitAdderDecl, "S[1]")),
+        nl.wire(nl.addOrGetOutputPort(fourBitAdderDecl, "S[2]")),
+        nl.wire(nl.addOrGetOutputPort(fourBitAdderDecl, "S[3]"))
     };
-    MappedPort fourBitAdderCout = nl.addOrGetOutputPort(fourBitAdderDecl, "Cout");
+    std::array<Wire, 3> Carry
+    {
+        nl.wire(nl.addOrGetOutputPort(fourBitAdderDecl, "Carry[0]")),
+        nl.wire(nl.addOrGetOutputPort(fourBitAdderDecl, "Carry[1]")),
+        nl.wire(nl.addOrGetOutputPort(fourBitAdderDecl, "Carry[2]"))
+    };
+    Wire Cout = nl.wire(nl.addOrGetOutputPort(fourBitAdderDecl, "Cout"));
 
     auto ha = nl.addOrGetModuleInst(fourBitAdderDecl, halfAdderDecl, "ha");
-    nl.mapPort(ha, nl.port(halfAdderA), nl.addOrGetWire(fourBitAdderDecl, "A[0]"));
-    nl.mapPort(ha, nl.port(halfAdderB), nl.addOrGetWire(fourBitAdderDecl, "B[0]"));
-    nl.mapPort(ha, nl.port(halfAdderS), nl.addOrGetWire(fourBitAdderDecl, "S[0]"));
+    nl.mapPort(ha, nl.port(halfAdderA), A[0]);
+    nl.mapPort(ha, nl.port(halfAdderB), B[0]);
+    nl.mapPort(ha, nl.port(halfAdderS), S[0]);
     nl.mapPort(ha, nl.port(halfAdderCout), nl.addOrGetWire(fourBitAdderDecl, "Carry[0]"));
     auto fa0 = nl.addOrGetModuleInst(fourBitAdderDecl, fullAdderDecl, "fa0");
-    nl.mapPort(fa0, nl.port(fullAdderA), nl.addOrGetWire(fourBitAdderDecl, "A[1]"));
-    nl.mapPort(fa0, nl.port(fullAdderB), nl.addOrGetWire(fourBitAdderDecl, "B[1]"));
-    nl.mapPort(fa0, nl.port(fullAdderS), nl.addOrGetWire(fourBitAdderDecl, "S[1]"));
-    nl.mapPort(fa0, nl.port(fullAdderCin), nl.addOrGetWire(fourBitAdderDecl, "Carry[0]"));
-    nl.mapPort(fa0, nl.port(fullAdderCout), nl.addOrGetWire(fourBitAdderDecl, "Carry[1]"));
+    nl.mapPort(fa0, nl.port(fullAdderA), A[1]);
+    nl.mapPort(fa0, nl.port(fullAdderB), B[1]);
+    nl.mapPort(fa0, nl.port(fullAdderS), S[1]);
+    nl.mapPort(fa0, nl.port(fullAdderCin), Carry[0]);
+    nl.mapPort(fa0, nl.port(fullAdderCout), Carry[1]);
     auto fa1 = nl.addOrGetModuleInst(fourBitAdderDecl, fullAdderDecl, "fa1");
-    nl.mapPort(fa1, nl.port(fullAdderA), nl.addOrGetWire(fourBitAdderDecl, "A[2]"));
-    nl.mapPort(fa1, nl.port(fullAdderB), nl.addOrGetWire(fourBitAdderDecl, "B[2]"));
-    nl.mapPort(fa1, nl.port(fullAdderS), nl.addOrGetWire(fourBitAdderDecl, "S[2]"));
-    nl.mapPort(fa1, nl.port(fullAdderCin), nl.addOrGetWire(fourBitAdderDecl, "Carry[1]"));
-    nl.mapPort(fa1, nl.port(fullAdderCout), nl.addOrGetWire(fourBitAdderDecl, "Carry[2]"));
+    nl.mapPort(fa1, nl.port(fullAdderA), A[2]);
+    nl.mapPort(fa1, nl.port(fullAdderB), B[2]);
+    nl.mapPort(fa1, nl.port(fullAdderS), S[2]);
+    nl.mapPort(fa1, nl.port(fullAdderCin), Carry[1]);
+    nl.mapPort(fa1, nl.port(fullAdderCout), Carry[2]);
     auto fa2 = nl.addOrGetModuleInst(fourBitAdderDecl, fullAdderDecl, "fa2");
-    nl.mapPort(fa2, nl.port(fullAdderA), nl.addOrGetWire(fourBitAdderDecl, "A[3]"));
-    nl.mapPort(fa2, nl.port(fullAdderB), nl.addOrGetWire(fourBitAdderDecl, "B[3]"));
-    nl.mapPort(fa2, nl.port(fullAdderS), nl.addOrGetWire(fourBitAdderDecl, "S[3]"));
-    nl.mapPort(fa2, nl.port(fullAdderCin), nl.addOrGetWire(fourBitAdderDecl, "Carry[2]"));
-    nl.mapPort(fa2, nl.port(fullAdderCout), nl.addOrGetWire(fourBitAdderDecl, "Cout"));
+    nl.mapPort(fa2, nl.port(fullAdderA), A[3]);
+    nl.mapPort(fa2, nl.port(fullAdderB), B[3]);
+    nl.mapPort(fa2, nl.port(fullAdderS), S[3]);
+    nl.mapPort(fa2, nl.port(fullAdderCin), Carry[2]);
+    nl.mapPort(fa2, nl.port(fullAdderCout), Cout);
 
     std::vector<ModuleInst> topLevel{nl.addOrGetModuleInst(ModuleDecl{}, fourBitAdderDecl, "adder4")};
     nl.topLevel(topLevel.front());
