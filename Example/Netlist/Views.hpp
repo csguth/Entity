@@ -2,6 +2,7 @@
 #define VIEWS_HPP
 
 #include <range/v3/all.hpp>
+#include <boost/variant/get.hpp>
 
 namespace Views
 {
@@ -43,12 +44,35 @@ auto preappend(std::string prefix, std::string suffix)
     return prepend(prefix) | append(suffix);
 }
 
+
+
 template <class Netlist>
 auto instAndName(Netlist& nl)
 {
     return ranges::view::transform([&](auto inst)
     {
-        return nl.name(nl.decl(inst)) + " " + getNameWithoutParentName(nl)(inst);
+        std::stringstream ss;
+        ranges::copy((nl.ports(inst) |
+                     ranges::view::transform([&](auto mappedPort)
+                     {
+                         auto port = nl.port(mappedPort);
+                         const std::string portName = [&]()
+                         {
+                             if (port.type() == typeid(InputPort))
+                             {
+                                 return getNameWithoutParentName(nl)(boost::get<InputPort>(port));
+                             }
+                             return getNameWithoutParentName(nl)(boost::get<OutputPort>(port));
+                         }();
+                         const std::string wireName = [&]()
+                         {
+                            return getNameWithoutParentName(nl)(nl.wire(mappedPort));
+                         }();
+                         return "." + portName + "(" + wireName + ")";
+                     }) |
+                     ranges::view::intersperse(", ")),
+                     ranges::ostream_iterator<std::string>(ss));
+        return nl.name(nl.decl(inst)) + " " + getNameWithoutParentName(nl)(inst) + " " + ss.str() + ";";
     });
 }
 
