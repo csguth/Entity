@@ -1,10 +1,10 @@
 #ifndef SYSTEM_HPP
 #define SYSTEM_HPP
 
-#include <boost/signals2/signal.hpp>
-#include <range/v3/all.hpp>
 #include <boost/signals2/dummy_mutex.hpp>
+#include <boost/signals2/signal.hpp>
 #include <boost/signals2/signal_type.hpp>
+#include <range/v3/all.hpp>
 
 namespace Entity {
 
@@ -68,7 +68,7 @@ namespace Entity
 
 using mutex_type = boost::signals2::keywords::mutex_type<boost::signals2::dummy_mutex>;
 
-template <class EntityType, template <typename> class BaseType>
+template <template <typename> class BaseType, class EntityType>
 class SystemBase
 {
 public:
@@ -100,7 +100,7 @@ public:
         OnEraseSignal   m_onErase;
     };
 
-    SystemBase():
+    constexpr SystemBase():
         m_notifier(std::make_shared<Notifier>()),
         m_next(0)
     {
@@ -173,10 +173,10 @@ protected:
 };
 
 template <class EntityType>
-class System: public SystemBase<EntityType, System>
+    class System: public SystemBase<::Entity::System, EntityType>
 {
 public:
-    friend SystemBase<EntityType, System>;
+    friend SystemBase<::Entity::System, EntityType>;
     struct Indexer
     {
         std::size_t lookup(EntityType en) const
@@ -185,13 +185,8 @@ public:
         }
     };
 
-    System():
-        SystemBase<EntityType, System>::SystemBase(),
-        m_capacity(0)
-    {
-
-    }
-
+    System();
+    
 protected:
     void doAdd() {}
     void doReserve(std::size_t capacity)
@@ -222,6 +217,15 @@ protected:
 private:
     std::size_t m_capacity;
 };
+    
+
+template <class EntityType>
+System<EntityType>::System() :
+    SystemBase<::Entity::System, EntityType>::SystemBase(),
+    m_capacity(0)
+{
+    
+}
 
 }
 

@@ -1,7 +1,7 @@
 #ifndef HIERARCHYTEST_HPP
 #define HIERARCHYTEST_HPP
 
-#include "System.hpp"
+#include <Entity/Core/System.hpp>
 
 namespace Test
 {

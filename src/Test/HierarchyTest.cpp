@@ -1,8 +1,9 @@
 #define CATCH_CONFIG_MAIN
 #include <catch.hpp>
+#include <Entity/Core/Composition.hpp>
+#include <Entity/Core/SystemWithDeletion.hpp>
+
 #include "HierarchyTest.hpp"
-#include "SystemWithDeletion.hpp"
-#include "Composition.hpp"
 
 using namespace Entity;
 

@@ -1,7 +1,9 @@
 #define CATCH_CONFIG_MAIN
-#include <catch.hpp>
+
 #include <sstream>
-#include "Graph.hpp"
+#include <catch.hpp>
+
+#include <Entity/Graph/Graph.hpp>
 
 using namespace Entity::Graph;
 
@@ -109,7 +111,7 @@ TEST_CASE("BFS")
     CHECK(count(bfs(d, v5), v0) == 0);
 }
 
-#include "Dijkstra.hpp"
+#include <Entity/Graph/Dijkstra.hpp>
 #include <range/v3/view/generate.hpp>
 #include <range/v3/view/zip.hpp>
 

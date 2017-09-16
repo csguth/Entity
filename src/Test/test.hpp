@@ -1,9 +1,9 @@
 #ifndef TEST_HPP
 #define TEST_HPP
 
-#include "System.hpp"
-#include "SystemWithDeletion.hpp"
-#include "KeyWrapper.hpp"
+#include <Entity/Core/KeyWrapper.hpp>
+#include <Entity/Core/System.hpp>
+#include <Entity/Core/SystemWithDeletion.hpp>
 
 namespace Test
 {

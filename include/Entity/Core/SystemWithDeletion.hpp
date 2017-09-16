@@ -7,10 +7,10 @@ namespace Entity
 {
 
 template <class EntityType>
-class SystemWithDeletion: public SystemBase<EntityType, SystemWithDeletion>
+    class SystemWithDeletion: public SystemBase<::Entity::SystemWithDeletion, EntityType>
 {
 public:
-    friend SystemBase<EntityType, SystemWithDeletion>;
+    friend SystemBase<::Entity::SystemWithDeletion, EntityType>;
     class Indexer
     {
     public:
@@ -34,7 +34,7 @@ public:
     };
 
     SystemWithDeletion() :
-        SystemBase<EntityType, SystemWithDeletion>(),
+        SystemBase<::Entity::SystemWithDeletion, EntityType>(),
         m_indexer(std::make_shared<Indexer>())
     {
 

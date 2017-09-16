@@ -1,8 +1,9 @@
 #include <iostream>
-#include <Entity/Graph/Graph.hpp>
-#include <Entity/Graph/Dijkstra.hpp>
 #include <map>
 #include <set>
+
+#include <Entity/Graph/Graph.hpp>
+#include <Entity/Graph/Dijkstra.hpp>
 
 using namespace Entity::Graph;
 

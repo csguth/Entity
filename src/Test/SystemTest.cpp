@@ -1,9 +1,9 @@
 #define CATCH_CONFIG_MAIN
 
 #include <iostream>
-
 #include <catch.hpp>
-#include "System.hpp"
+#include <Entity/Core/System.hpp>
+
 #include "test.hpp"
 
 using namespace Entity;

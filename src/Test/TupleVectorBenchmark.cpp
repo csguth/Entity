@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "TupleVector.hpp"
+#include <Entity/Core/TupleVector.hpp>
 
 template <uint32_t N, class Callable>
 void repeat(Callable cb)

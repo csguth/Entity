@@ -124,7 +124,7 @@ public:
             ParticleContour& shape           = std::get<0>(tuple);
             const Data& data                 = std::get<1>(tuple);
             const uint8_t life               = std::get<2>(tuple);
-            shape.set(data.pos, sf::Color{255, 255-life, 0});
+            shape.set(data.pos, sf::Color{255, static_cast<sf::Uint8>(255-life), 0});
         });
     }
 

@@ -1,9 +1,11 @@
 #ifndef PROPERTY_H
 #define PROPERTY_H
 
-#include "System.hpp"
 #include <iostream>
 #include <type_traits>
+
+#include <Entity/Core/System.hpp>
+
 namespace Entity
 {
 
@@ -84,7 +86,8 @@ public:
     {
         m_onEraseConnection.disconnect();
     }
-    Property& operator=(auto range)
+    template <class RangeType>
+    Property& operator=(RangeType range)
     {
         ranges::copy(range, m_values.begin());
         return *this;

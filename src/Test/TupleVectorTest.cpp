@@ -1,7 +1,7 @@
 #define CATCH_CONFIG_MAIN
 #include <catch.hpp>
 
-#include "TupleVector.hpp"
+#include <Entity/Core/TupleVector.hpp>
 
 using namespace Entity;
 

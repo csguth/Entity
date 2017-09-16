@@ -1,7 +1,11 @@
 #define CATCH_CONFIG_MAIN
-#include <catch.hpp>
+
 #include <algorithm>
-#include "Property.hpp"
+#include <catch.hpp>
+
+#include <Entity/Core/Property.hpp>
+#include <Entity/Core/SystemWithDeletion.hpp>
+
 #include "test.hpp"
 
 using namespace Entity;
@@ -90,8 +94,6 @@ TEST_CASE("As Range")
     const std::vector<double> goldenResult{{66.0, 132.0}};
     REQUIRE(std::equal(result.begin(), result.end(), goldenResult.begin(), goldenResult.end()));
 }
-
-#include "SystemWithDeletion.hpp"
 
 TEST_CASE("Deletion")
 {
