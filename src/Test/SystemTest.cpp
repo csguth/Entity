@@ -34,7 +34,7 @@ TEST_CASE_METHOD(Test::Fixture::Empty<System>, "connectOnAdd")
 {
     Test::TestEntity en;
     int called = 0;
-    system.connectOnAdd([&en, &called](Test::TestEntity en2)
+    system.notifier->onAdd.connect([&en, &called](Test::TestEntity en2)
     {
         en = en2;
         ++called;
@@ -53,7 +53,7 @@ TEST_CASE_METHOD(Test::Fixture::Empty<System>, "connectOnReserve")
     auto callReserveAndReturnTheArg = [&](std::size_t value)
     {
         std::size_t size_;
-        auto scoped = system.connectOnReserve([&](auto theSize)
+        auto scoped = system.notifier->onReserve.connect([&](auto theSize)
         {
             size_ = theSize;
         });
@@ -120,7 +120,7 @@ TEST_CASE_METHOD(Test::Fixture::WithThreeEntities<SystemWithDeletion>, "connectO
 {
     using ContainerType = std::vector<Test::TestEntity>;
     ContainerType erased;
-    system.connectOnErase([&erased](auto en)
+    system.notifier->onErase.connect([&erased](auto en)
     {
         erased.push_back(en);
     });

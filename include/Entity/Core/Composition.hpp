@@ -63,7 +63,7 @@ protected:
 template <typename ParentType, template <typename> class ParentSystemType, typename ChildType, template <typename> class ChildSystemType>
 auto connectOnEraseIfPossibleForLeftMapped(int, boost::signals2::scoped_connection& connection, std::shared_ptr<typename ParentSystemType<ParentType>::Notifier>& notifier, ChildSystemType<ChildType>& child, Property<ParentType, ChildType, ParentSystemType>& firstChild, Property<ChildType, ChildType, ChildSystemType>& nextSibling) -> decltype((void)&ChildSystemType<ChildType>::erase, void())
 {
-    connection = std::move(notifier->connectOnErase([&](ParentType en)
+    connection = std::move(notifier->onErase.connect([&](ParentType en)
     {
         for(ChildType curr{firstChild[en]}, next; curr != ChildType{}; curr = next)
         {
@@ -90,8 +90,7 @@ public:
         m_nextSibling(makeProperty<ChildType>(child))
     {
         m_firstChild.disconnectOnErase();
-        auto notifier = parent.notifier().lock();
-        connectOnEraseIfPossibleForLeftMapped(0, m_onEraseConnection, notifier, child, m_firstChild, m_nextSibling);
+        connectOnEraseIfPossibleForLeftMapped(0, m_onEraseConnection, parent.notifier, child, m_firstChild, m_nextSibling);
     }
     ChildType firstChild(ParentType parent) const
     {
@@ -218,7 +217,7 @@ auto connectOnEraseIfPossibleForBothMapped(int, boost::signals2::scoped_connecti
 template <typename ParentType, template <typename> class ParentSystemType, typename ChildType, template <typename> class ChildSystemType>
 auto connectOnEraseIfPossibleForBothMapped(char, boost::signals2::scoped_connection& connection, std::shared_ptr<typename ParentSystemType<ParentType>::Notifier>& notifier, ChildSystemType<ChildType>& child, Property<ParentType, ChildType, ParentSystemType>& firstChild, Property<ChildType, ChildType, ChildSystemType>& nextSibling, Property<ChildType, ParentType, ChildSystemType>& parent) -> decltype(void(), void())
 {
-    connection = std::move(notifier->connectOnErase([&](ParentType en)
+    connection = std::move(notifier->onErase.connect([&](ParentType en)
     {
         for(ChildType curr{firstChild[en]}, next; curr != ChildType{}; curr = next)
         {
@@ -243,13 +242,11 @@ public:
     {
         LeftParent::disconnectOnErase();
         {
-            auto notifier = parent.notifier().lock();
-            connectOnEraseIfPossibleForBothMapped(0, this->m_onEraseConnection, notifier, child, this->m_firstChild, this->m_nextSibling, this->m_parent);
+            connectOnEraseIfPossibleForBothMapped(0, this->m_onEraseConnection, parent.notifier, child, this->m_firstChild, this->m_nextSibling, this->m_parent);
         }
         this->m_nextSibling.disconnectOnErase();
         this->m_parent.disconnectOnErase();
-        auto notifier = child.notifier().lock();
-        m_onEraseChildConnection = std::move(notifier->connectOnErase([&](ChildType child)
+        m_onEraseChildConnection = std::move(child.notifier->onErase.connect([&](ChildType child)
         {
             auto theParent = this->parent(child);
             if(parent.alive(theParent))
@@ -327,17 +324,15 @@ class WeakAdapter
 public:
     using Indexer = typename SystemWithDeletion<EntityType>::Indexer;
     using Notifier = typename SystemWithDeletion<EntityType>::Notifier;
+    
     WeakAdapter(SystemWithDeletion<EntityType>& system):
+        notifier(system.notifier),
         m_system(system)
     {
     }
     auto indexer()
     {
         return m_system.indexer();
-    }
-    auto notifier()
-    {
-        return m_system.notifier();
     }
     auto capacity() const
     {
@@ -347,7 +342,8 @@ public:
     {
         return m_system.size();
     }
-private:
+    
+    std::shared_ptr<Notifier>& notifier;
     SystemWithDeletion<EntityType>& m_system;
 };
 
