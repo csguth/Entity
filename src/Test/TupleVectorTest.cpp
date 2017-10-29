@@ -1,11 +1,9 @@
-#define CATCH_CONFIG_MAIN
 #include <catch.hpp>
-
 #include <Entity/Core/TupleVector.hpp>
 
 using namespace Entity;
 
-TEST_CASE("Empty tuple vector")
+TEST_CASE("Empty tuple vector", "[TupleVector]")
 {
     {
         TupleVector<int> vector;
@@ -24,7 +22,7 @@ TEST_CASE("Empty tuple vector")
     }
 }
 
-TEST_CASE("Words needed")
+TEST_CASE("Words needed", "[TupleVector]")
 {
     auto wordsNeededZero = [](std::size_t i)
     {
@@ -80,7 +78,7 @@ auto lastWord(std::size_t capacity)
     return TupleVectorTraits<offset, uint32_t, uint8_t, uint64_t>::lastWord(capacity);
 }
 
-TEST_CASE("First word index")
+TEST_CASE("First word index", "[TupleVector]")
 {
     CHECK(firstWord<1>(0)    == 0    + 0   + 0);
     CHECK(firstWord<1>(42)   == 0    + 0   + 0);
@@ -95,7 +93,7 @@ TEST_CASE("First word index")
     CHECK(firstWord<3>(1024) == 1024 + 256 + 0);
 }
 
-TEST_CASE("Last word index")
+TEST_CASE("Last word index", "[TupleVector]")
 {
     CHECK(lastWord<1>(0)    == 0    + 0   + 0   );
     CHECK(lastWord<1>(42)   == 42   + 0   + 0   );
@@ -110,7 +108,7 @@ TEST_CASE("Last word index")
     CHECK(lastWord<3>(1024) == 1024 + 256 + 2048);
 }
 
-TEST_CASE("Access")
+TEST_CASE("Access", "[TupleVector]")
 {
     {
         TupleVector<int> vector(3);
@@ -153,7 +151,7 @@ TEST_CASE("Access")
 }
 
 
-TEST_CASE("Reserve & Resize")
+TEST_CASE("Reserve & Resize", "[TupleVector]")
 {
     auto check = [](auto&& vector)
     {
@@ -187,7 +185,7 @@ TEST_CASE("Reserve & Resize")
     }
 }
 
-TEST_CASE("Copy")
+TEST_CASE("Copy", "[TupleVector]")
 {
     {
         std::vector<uint32_t> origin{{1, 2}};
@@ -228,7 +226,7 @@ TEST_CASE("Copy")
 
 }
 
-TEST_CASE("Reallocation keeps elements on their positions")
+TEST_CASE("Reallocation keeps elements on their positions", "[TupleVector]")
 {
     //[   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20,  21,  22,  23,  24,  25]
     //[32_0,32_0,32_0,32_0,32_1,32_1,32_1,32_1, 8_0, 8_1,64_0,64_0,64_0,64_0,64_0,64_0,64_0,64_0,64_1,64_1,64_1,64_1,64_1,64_1,64_1,64_1]

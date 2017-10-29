@@ -1,15 +1,11 @@
-#define CATCH_CONFIG_MAIN
-
 #include <algorithm>
 #include <catch.hpp>
-
 #include <Entity/Core/Property.hpp>
 #include <Entity/Core/SystemWithDeletion.hpp>
-
 #include "test.hpp"
 
 using namespace Entity;
-TEST_CASE("Property")
+TEST_CASE("Property", "[Property]")
 {
     System<Test::TestEntity> sys;
     auto prop = makeProperty<double>(sys);
@@ -17,7 +13,7 @@ TEST_CASE("Property")
     CHECK(prop.size() == sys.size());
 }
 
-TEST_CASE("Add After")
+TEST_CASE("Add After", "[Property]")
 {
     System<Test::TestEntity> sys;
     auto prop = makeProperty<double>(sys);
@@ -26,7 +22,7 @@ TEST_CASE("Add After")
     CHECK(prop.size() == 1);
 }
 
-TEST_CASE("Add Before")
+TEST_CASE("Add Before", "[Property]")
 {
     System<Test::TestEntity> sys;
     const Test::TestEntity en = sys.add();
@@ -35,7 +31,7 @@ TEST_CASE("Add Before")
     CHECK(prop.size() == 1);
 }
 
-TEST_CASE("Capacity After")
+TEST_CASE("Capacity After", "[Property]")
 {
     System<Test::TestEntity> sys;
     auto prop = makeProperty<double>(sys);
@@ -44,7 +40,7 @@ TEST_CASE("Capacity After")
     CHECK(prop.capacity() == 1024);
 }
 
-TEST_CASE("Capacity Before")
+TEST_CASE("Capacity Before", "[Property]")
 {
     System<Test::TestEntity> sys;
     sys.reserve(1024);
@@ -53,7 +49,7 @@ TEST_CASE("Capacity Before")
     CHECK(prop.capacity() == 1024);
 }
 
-TEST_CASE("Scoped Connections")
+TEST_CASE("Scoped Connections", "[Property]")
 {
     System<Test::TestEntity> sys;
     {
@@ -67,7 +63,7 @@ TEST_CASE("Scoped Connections")
 
 using namespace ranges::v3;
 #include <iostream>
-TEST_CASE("As Range")
+TEST_CASE("As Range", "[Property]")
 {
     System<Test::TestEntity> sys;
     auto prop = makeProperty<double>(sys);
@@ -95,7 +91,7 @@ TEST_CASE("As Range")
     REQUIRE(std::equal(result.begin(), result.end(), goldenResult.begin(), goldenResult.end()));
 }
 
-TEST_CASE("Deletion")
+TEST_CASE("Deletion", "[Property]")
 {
     {
         SystemWithDeletion<Test::TestEntity> sys;
@@ -121,7 +117,7 @@ TEST_CASE("Deletion")
     }
 }
 
-TEST_CASE("Independent Lifetimes")
+TEST_CASE("Independent Lifetimes", "[Property]")
 {
     {
         Property<Test::TestEntity, double, System> prop;
@@ -159,7 +155,7 @@ TEST_CASE("Independent Lifetimes")
     }
 }
 
-TEST_CASE("Move")
+TEST_CASE("Move", "[Property]")
 {
     auto createProp = [](SystemWithDeletion<Test::TestEntity>& theSys)
     {

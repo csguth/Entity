@@ -1,15 +1,11 @@
-#define CATCH_CONFIG_MAIN
-
-#include <iostream>
 #include <catch.hpp>
 #include <Entity/Core/System.hpp>
-
 #include "test.hpp"
 
 using namespace Entity;
 using namespace ranges;
 
-TEST_CASE_METHOD(Test::Fixture::Empty<System>, "empty")
+TEST_CASE_METHOD(Test::Fixture::Empty<System>, "empty", "[System]")
 {
     CHECK(system.empty());
     CHECK(system.size() == 0);
@@ -17,20 +13,20 @@ TEST_CASE_METHOD(Test::Fixture::Empty<System>, "empty")
     CHECK(!system.alive(Test::TestEntity{}));
 }
 
-TEST_CASE_METHOD(Test::Fixture::WithOneEntity<System>, "add")
+TEST_CASE_METHOD(Test::Fixture::WithOneEntity<System>, "add", "[System]")
 {
     CHECK(system.size() == 1);
     CHECK(system.alive(entity[0]));
     CHECK(!system.empty());
 }
 
-TEST_CASE_METHOD(Test::Fixture::Empty<System>, "reserve")
+TEST_CASE_METHOD(Test::Fixture::Empty<System>, "reserve", "[System]")
 {
     system.reserve(42);
     CHECK(system.capacity() == 42);
 }
 
-TEST_CASE_METHOD(Test::Fixture::Empty<System>, "connectOnAdd")
+TEST_CASE_METHOD(Test::Fixture::Empty<System>, "connectOnAdd", "[System]")
 {
     Test::TestEntity en;
     int called = 0;
@@ -48,7 +44,7 @@ TEST_CASE_METHOD(Test::Fixture::Empty<System>, "connectOnAdd")
     CHECK(!system.empty());
 }
 
-TEST_CASE_METHOD(Test::Fixture::Empty<System>, "connectOnReserve")
+TEST_CASE_METHOD(Test::Fixture::Empty<System>, "connectOnReserve", "[System]")
 {
     auto callReserveAndReturnTheArg = [&](std::size_t value)
     {
@@ -64,7 +60,7 @@ TEST_CASE_METHOD(Test::Fixture::Empty<System>, "connectOnReserve")
     CHECK(callReserveAndReturnTheArg(666) == 666);
 }
 
-TEST_CASE_METHOD(Test::Fixture::WithThreeEntities<System>, "asRange")
+TEST_CASE_METHOD(Test::Fixture::WithThreeEntities<System>, "asRange", "[System]")
 {
     auto range   = system.asRange();
     auto lastTwo = system.asRange() | view::drop(1);
@@ -74,14 +70,14 @@ TEST_CASE_METHOD(Test::Fixture::WithThreeEntities<System>, "asRange")
     CHECK(entity[2] == *begin(last));
 }
 
-TEST_CASE_METHOD(Test::Fixture::WithOneEntity<SystemWithDeletion>,"erase 1 of 1")
+TEST_CASE_METHOD(Test::Fixture::WithOneEntity<SystemWithDeletion>,"erase 1 of 1", "[System]")
 {
     system.erase(entity[0]);
     CHECK(system.empty());
     CHECK(!system.alive(entity[0]));
 }
 
-TEST_CASE_METHOD(Test::Fixture::WithThreeEntitiesEraseFirst<SystemWithDeletion>,"erase 1 (first) of 3")
+TEST_CASE_METHOD(Test::Fixture::WithThreeEntitiesEraseFirst<SystemWithDeletion>,"erase 1 (first) of 3", "[System]")
 {
     CHECK(system.size() == 2);
     CHECK(system.alive(entity[1]));
@@ -89,7 +85,7 @@ TEST_CASE_METHOD(Test::Fixture::WithThreeEntitiesEraseFirst<SystemWithDeletion>,
     CHECK(!system.alive(entity[0]));
 }
 
-TEST_CASE_METHOD(Test::Fixture::WithThreeEntities<SystemWithDeletion>,"erase 1 of 3")
+TEST_CASE_METHOD(Test::Fixture::WithThreeEntities<SystemWithDeletion>,"erase 1 of 3", "[System]")
 {
     system.erase(entity[1]);
     CHECK(system.size() == 2);
@@ -98,7 +94,7 @@ TEST_CASE_METHOD(Test::Fixture::WithThreeEntities<SystemWithDeletion>,"erase 1 o
     CHECK(!system.alive(entity[1]));
 }
 
-TEST_CASE_METHOD(Test::Fixture::WithThreeEntities<SystemWithDeletion>,"erase 2 of 3")
+TEST_CASE_METHOD(Test::Fixture::WithThreeEntities<SystemWithDeletion>,"erase 2 of 3", "[System]")
 {
     system.erase(entity[1]);
     system.erase(entity[2]);
@@ -108,7 +104,7 @@ TEST_CASE_METHOD(Test::Fixture::WithThreeEntities<SystemWithDeletion>,"erase 2 o
     CHECK(!system.alive(entity[2]));
 }
 
-TEST_CASE_METHOD(Test::Fixture::WithOneEntity<SystemWithDeletion>, "erase invalid")
+TEST_CASE_METHOD(Test::Fixture::WithOneEntity<SystemWithDeletion>, "erase invalid", "[System]")
 {
     CHECK_THROWS(system.erase(Test::TestEntity{}));
     CHECK(system.size() == 1);
@@ -116,7 +112,7 @@ TEST_CASE_METHOD(Test::Fixture::WithOneEntity<SystemWithDeletion>, "erase invali
     CHECK(!system.empty());
 }
 
-TEST_CASE_METHOD(Test::Fixture::WithThreeEntities<SystemWithDeletion>, "connectOnErase")
+TEST_CASE_METHOD(Test::Fixture::WithThreeEntities<SystemWithDeletion>, "connectOnErase", "[System]")
 {
     using ContainerType = std::vector<Test::TestEntity>;
     ContainerType erased;
@@ -130,7 +126,7 @@ TEST_CASE_METHOD(Test::Fixture::WithThreeEntities<SystemWithDeletion>, "connectO
     CHECK(std::equal(erased.begin(), erased.end(), golden.begin(), golden.end()));
 }
 
-TEST_CASE_METHOD(Test::Fixture::WithOneEntity<System>, "indexer")
+TEST_CASE_METHOD(Test::Fixture::WithOneEntity<System>, "indexer", "[System]")
 {
     auto indexer = system.indexer();
     CHECK(indexer.use_count() == 2);
@@ -140,7 +136,7 @@ TEST_CASE_METHOD(Test::Fixture::WithOneEntity<System>, "indexer")
     CHECK(indexer2.get() == indexer.get());
 }
 
-TEST_CASE_METHOD(Test::Fixture::WithThreeEntitiesEraseFirst<SystemWithDeletion>, "indexer (with deletion)")
+TEST_CASE_METHOD(Test::Fixture::WithThreeEntitiesEraseFirst<SystemWithDeletion>, "indexer (with deletion)", "[System]")
 {
     auto indexer = system.indexer();
     CHECK(indexer->lookup(entity[0]) == Test::TestEntity().id());
@@ -158,14 +154,14 @@ TEST_CASE_METHOD(Test::Fixture::WithThreeEntitiesEraseFirst<SystemWithDeletion>,
 }
 
 
-TEST_CASE_METHOD(Test::Fixture::Empty<System>, "KeyWrapper empty")
+TEST_CASE_METHOD(Test::Fixture::Empty<System>, "KeyWrapper empty", "[System]")
 {
     auto keyWrapper = makeKeyWrapper<std::string>(system);
     CHECK(!keyWrapper.has(Test::Fixture::KeyWrapperWithEntity::key()));
     REQUIRE_THROWS(keyWrapper.at(Test::Fixture::KeyWrapperWithEntity::key()));
 }
 
-TEST_CASE_METHOD(Test::Fixture::KeyWrapperWithEntity, "KeyWrapper add")
+TEST_CASE_METHOD(Test::Fixture::KeyWrapperWithEntity, "KeyWrapper add", "[System]")
 {
     CHECK(keyWrapper.key(entity) == key());
     CHECK(keyWrapper.has(key()));
@@ -173,13 +169,13 @@ TEST_CASE_METHOD(Test::Fixture::KeyWrapperWithEntity, "KeyWrapper add")
     CHECK(system.size() == 1);
 }
 
-TEST_CASE_METHOD(Test::Fixture::KeyWrapperWithEntity, "KeyWrapper get")
+TEST_CASE_METHOD(Test::Fixture::KeyWrapperWithEntity, "KeyWrapper get", "[System]")
 {
     CHECK(keyWrapper.addOrGet(key()) == entity);
     CHECK(system.size() == 1);
 }
 
-TEST_CASE_METHOD(Test::Fixture::KeyWrapperWithEntity, "KeyWrapper erase")
+TEST_CASE_METHOD(Test::Fixture::KeyWrapperWithEntity, "KeyWrapper erase", "[System]")
 {
     system.erase(entity);
     CHECK(!keyWrapper.has(key()));

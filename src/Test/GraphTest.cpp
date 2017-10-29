@@ -1,34 +1,31 @@
-#define CATCH_CONFIG_MAIN
-
-#include <sstream>
 #include <catch.hpp>
-
+#include <sstream>
 #include <Entity/Graph/Graph.hpp>
 
 using namespace Entity::Graph;
 
-TEST_CASE("Empty SmartDigraph")
+TEST_CASE("Empty SmartDigraph", "[Graph]")
 {
     SmartDigraph d;
     CHECK(d.order() == 0);
     CHECK(d.size() == 0);
 }
 
-TEST_CASE("Add Vertex")
+TEST_CASE("Add Vertex", "[Graph]")
 {
     SmartDigraph d;
     d.addVertex();
     CHECK(d.order() == 1);
 }
 
-TEST_CASE("Add Arc")
+TEST_CASE("Add Arc", "[Graph]")
 {
     SmartDigraph d;
     d.addArc(d.addVertex(), d.addVertex());
     CHECK(d.size() == 1);
 }
 
-TEST_CASE("Source, Target, Opposite")
+TEST_CASE("Source, Target, Opposite", "[Graph]")
 {
     SmartDigraph d;
     auto source = d.addVertex();
@@ -40,7 +37,7 @@ TEST_CASE("Source, Target, Opposite")
     CHECK(d.opposite(arc, target) == source);
 }
 
-TEST_CASE("Get arc")
+TEST_CASE("Get arc", "[Graph]")
 {
     SmartDigraph d;
     auto source = d.addVertex();
@@ -50,7 +47,7 @@ TEST_CASE("Get arc")
     CHECK(Arc{} == d.arc(target, source));
 }
 
-TEST_CASE("Degree")
+TEST_CASE("Degree", "[Graph]")
 {
     /*
         v0 -e0-> v1 -e1-> v2
@@ -84,7 +81,7 @@ std::ostream& operator << (std::ostream& os, common_pair<T, U> const& p) {
 }
 }
 
-TEST_CASE("BFS")
+TEST_CASE("BFS", "[Graph]")
 {
     using namespace ranges::v3;
     /*
@@ -180,7 +177,7 @@ auto dijkstraBoilerplate()
     CHECK(goldenSp == shortestPath);
 }
 
-TEST_CASE("Dijkstra")
+TEST_CASE("Dijkstra", "[Graph]")
 {
     dijkstraBoilerplate<SmartDigraph>();
     dijkstraBoilerplate<Digraph>();
@@ -189,7 +186,7 @@ TEST_CASE("Dijkstra")
 }
 
 
-TEST_CASE("Digraph with Deletion")
+TEST_CASE("Digraph with Deletion", "[Graph]")
 {
     Digraph d;
     CHECK(d.order() == 0);
@@ -200,7 +197,7 @@ TEST_CASE("Digraph with Deletion")
     CHECK(d.order() == 0);
 }
 
-TEST_CASE("Digraph/ Should delete arcs when vertex is deleted")
+TEST_CASE("Digraph/ Should delete arcs when vertex is deleted", "[Graph]")
 {
     Digraph d;
     auto u = d.addVertex();
@@ -211,7 +208,7 @@ TEST_CASE("Digraph/ Should delete arcs when vertex is deleted")
     CHECK(d.size() == 0);
 }
 
-TEST_CASE("Digraph/ Should keep vertices when arc is deleted")
+TEST_CASE("Digraph/ Should keep vertices when arc is deleted", "[Graph]")
 {
     Digraph d;
     auto u = d.addVertex();

@@ -1,4 +1,3 @@
-#define CATCH_CONFIG_MAIN
 #include <catch.hpp>
 #include <Entity/Core/Composition.hpp>
 #include <Entity/Core/SystemWithDeletion.hpp>
@@ -7,7 +6,7 @@
 
 using namespace Entity;
 
-TEST_CASE("Mapping interface")
+TEST_CASE("Mapping interface", "[Hierarchy]")
 {
     {
         auto parentSystem = SystemWithDeletion<Test::Parent>{};
@@ -54,7 +53,7 @@ TEST_CASE("Mapping interface")
 
 }
 
-TEST_CASE("Add child")
+TEST_CASE("Add child", "[Hierarchy]")
 {
     {
         auto parentSystem = SystemWithDeletion<Test::Parent>{};
@@ -103,7 +102,7 @@ TEST_CASE("Add child")
 }
 
 using namespace ranges::v3;
-TEST_CASE("Range adaptors")
+TEST_CASE("Range adaptors", "[Hierarchy]")
 {
     auto parentSystem = SystemWithDeletion<Test::Parent>{};
     auto childSystem  = SystemWithDeletion<Test::Child>{};
@@ -123,7 +122,7 @@ TEST_CASE("Range adaptors")
     CHECK(ranges::count(leftMapped.children(parent1), Test::Child{}) == 0);
 }
 
-TEST_CASE("Strong composition")
+TEST_CASE("Strong composition", "[Hierarchy]")
 {
     auto test = [](auto&& parentSystem, auto&& childSystem, auto composition)
     {
@@ -197,7 +196,7 @@ TEST_CASE("Strong composition")
 
 }
 
-TEST_CASE("Weak adapter")
+TEST_CASE("Weak adapter", "[Hierarchy]")
 {
     {
         // With the weak adapter
@@ -258,7 +257,7 @@ TEST_CASE("Weak adapter")
     }
 }
 
-TEST_CASE("Add/Remove child")
+TEST_CASE("Add/Remove child", "[Hierarchy]")
 {
     auto test = [](auto&& parentSystem, auto&& childSystem, auto composition)
     {
