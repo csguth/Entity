@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.1)
 project(Entity)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+conan_basic_setup()
+
+set(CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR} ${CMAKE_MODULE_PATH})
 
 find_package(Boost REQUIRED)
 
@@ -17,8 +21,5 @@ add_subdirectory(include/Entity)
 #  HACK: have the files showing in the IDE, under the name 'moduleA_ide'
 #
 add_custom_target(entity_IDE SOURCES ${Entity_SOURCES_LIST})
-
-add_library(catch INTERFACE)
-target_include_directories(catch INTERFACE 3rdparty/catch/include)
 
 add_subdirectory(src)

@@ -41,7 +41,7 @@ public:
     }
     void run(typename GraphType::VertexType source)
     {
-        namespace rng = ranges::v3;
+        namespace rng = ranges;
         rng::fill(m_dist.asRange(), inf());
         rng::fill(m_prev.asRange(), typename GraphType::ArcType{});
         m_dist[source] = 0;
@@ -117,7 +117,7 @@ private:
         {
             return m_view->current();
         }
-        bool equal(ranges::default_sentinel) const
+        bool equal(ranges::default_sentinel_t) const
         {
             return m_view->current() == typename GraphType::ArcType{};
         }

@@ -1,4 +1,4 @@
-﻿#ifndef COMPOSITION_HPP
+#ifndef COMPOSITION_HPP
 #define COMPOSITION_HPP
 
 #include "Property.hpp"
@@ -167,7 +167,7 @@ public:
             {
                 return m_range->current();
             }
-            bool equal(ranges::default_sentinel) const
+            bool equal(ranges::default_sentinel_t) const
             {
                 return m_range->current() == ChildType{};
             }

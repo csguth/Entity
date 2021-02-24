@@ -1,4 +1,4 @@
-#include <catch.hpp>
+#include "test.hpp"
 #include <Entity/Core/Composition.hpp>
 #include <Entity/Core/SystemWithDeletion.hpp>
 
@@ -101,7 +101,7 @@ TEST_CASE("Add child", "[Hierarchy]")
 
 }
 
-using namespace ranges::v3;
+using namespace ranges;
 TEST_CASE("Range adaptors", "[Hierarchy]")
 {
     auto parentSystem = SystemWithDeletion<Test::Parent>{};

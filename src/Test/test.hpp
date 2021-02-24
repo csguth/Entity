@@ -1,6 +1,8 @@
 #ifndef TEST_HPP
 #define TEST_HPP
 
+#include <catch2/catch.hpp>
+
 #include <Entity/Core/KeyWrapper.hpp>
 #include <Entity/Core/System.hpp>
 #include <Entity/Core/SystemWithDeletion.hpp>

@@ -41,7 +41,7 @@ constexpr std::size_t SystemWithDeletion<EntityType>::getSize() const
 template <class EntityType>
 auto SystemWithDeletion<EntityType>::getRange() const
 {
-    return ranges::make_iterator_range(m_entities.begin(), m_entities.end());
+    return ranges::make_subrange(m_entities.begin(), m_entities.end());
 }
 template <class EntityType>
 void SystemWithDeletion<EntityType>::doReserve(std::size_t size)

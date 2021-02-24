@@ -46,7 +46,7 @@ constexpr typename std::vector<ValueType>::size_type Property<KeyType, ValueType
     return m_values.size();
 }
 template <typename KeyType, typename ValueType, template <typename> class SystemType>
-constexpr bool Property<KeyType, ValueType, SystemType>::empty() const
+bool Property<KeyType, ValueType, SystemType>::empty() const
 {
     return m_values.empty();
 }
@@ -68,12 +68,12 @@ typename std::vector<ValueType>::const_reference Property<KeyType, ValueType, Sy
 template <typename KeyType, typename ValueType, template <typename> class SystemType>
 auto Property<KeyType, ValueType, SystemType>::asRange()
 {
-    return ranges::make_iterator_range(m_values.begin(), m_values.end());
+    return ranges::make_subrange(m_values.begin(), m_values.end());
 }
 template <typename KeyType, typename ValueType, template <typename> class SystemType>
 auto Property<KeyType, ValueType, SystemType>::asRange() const
 {
-    return ranges::make_iterator_range(m_values.cbegin(), m_values.cend());
+    return ranges::make_subrange(m_values.cbegin(), m_values.cend());
 }
 template <typename KeyType, typename ValueType, template <typename> class SystemType>
 const ValueType* Property<KeyType, ValueType, SystemType>::data() const

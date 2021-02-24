@@ -1,4 +1,3 @@
-#include <catch.hpp>
 #include <Entity/Core/System.hpp>
 #include "test.hpp"
 
@@ -63,8 +62,8 @@ TEST_CASE_METHOD(Test::Fixture::Empty<System>, "connectOnReserve", "[System]")
 TEST_CASE_METHOD(Test::Fixture::WithThreeEntities<System>, "asRange", "[System]")
 {
     auto range   = system.asRange();
-    auto lastTwo = system.asRange() | view::drop(1);
-    auto last    = system.asRange() | view::drop(2);
+    auto lastTwo = system.asRange() | views::drop(1);
+    auto last    = system.asRange() | views::drop(2);
     CHECK(entity[0] == *begin(range));
     CHECK(entity[1] == *begin(lastTwo));
     CHECK(entity[2] == *begin(last));
@@ -143,9 +142,9 @@ TEST_CASE_METHOD(Test::Fixture::WithThreeEntitiesEraseFirst<SystemWithDeletion>,
     const std::vector<std::size_t> goldenIds{0, 1};
     const std::vector<std::size_t> ids = [&]()
     {
-        std::vector<std::size_t> ids_;
-        ids_ = (system.asRange() | view::transform([&](auto&& en) { return indexer->lookup(en); }));
-        return ids_;
+        auto const theview = (system.asRange() | views::transform([&](auto&& en) { return indexer->lookup(en); }));
+        
+        return std::vector<std::size_t>(theview.begin(), theview.end());
     }();
     CHECK(std::is_permutation(ids.begin(), ids.end(), goldenIds.begin(), goldenIds.end()));
     SystemWithDeletion<Test::TestEntity> system2;

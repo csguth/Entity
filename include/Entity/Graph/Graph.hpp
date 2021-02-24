@@ -242,7 +242,7 @@ private:
         {
             return m_range->current();
         }
-        bool equal(ranges::default_sentinel) const
+        bool equal(ranges::default_sentinel_t) const
         {
             return m_range->current() == Vertex{};
         }

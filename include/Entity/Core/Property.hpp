@@ -18,7 +18,7 @@ public:
     Property& operator=(Property&& other);
     Property& operator=(const Property& other);
     constexpr typename std::vector<ValueType>::size_type size() const;
-    constexpr bool empty() const;
+    bool empty() const;
     constexpr typename std::vector<ValueType>::size_type capacity() const;
     typename std::vector<ValueType>::reference operator[](KeyType key);
     typename std::vector<ValueType>::const_reference operator[](KeyType key) const;
@@ -65,9 +65,7 @@ Property<KeyType, ValueType, SystemType> makeProperty(SystemType<KeyType>& syste
 
 namespace ranges
 {
-inline namespace v3
-{
-namespace view
+namespace views
 {
     template <typename ValueType, typename KeyType, template <typename> class SystemType>
     auto get(const Entity::Property<KeyType, ValueType, SystemType>& property)
@@ -78,7 +76,6 @@ namespace view
         });
     }
 
-}
 }
 }
 

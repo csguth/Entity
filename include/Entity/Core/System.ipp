@@ -119,7 +119,7 @@ std::shared_ptr<typename System<EntityType>::Indexer> System<EntityType>::getInd
 template <class EntityType>
 auto System<EntityType>::getRange() const
 {
-    return ranges::view::iota(static_cast<std::size_t>(0), getSize()) | ranges::view::transform([](auto id){ return EntityType{id}; });
+    return ranges::views::iota(static_cast<std::size_t>(0), getSize()) | ranges::views::transform([](auto id){ return EntityType{id}; });
 }
 template <class EntityType>
 std::size_t System<EntityType>::getCapacity() const

@@ -1,5 +1,5 @@
 #include <algorithm>
-#include <catch.hpp>
+#include "test.hpp"
 #include <Entity/Core/Property.hpp>
 #include <Entity/Core/SystemWithDeletion.hpp>
 #include "test.hpp"
@@ -61,7 +61,7 @@ TEST_CASE("Scoped Connections", "[Property]")
     CHECK_NOTHROW(sys.add());
 }
 
-using namespace ranges::v3;
+using namespace ranges;
 #include <iostream>
 TEST_CASE("As Range", "[Property]")
 {
@@ -70,20 +70,20 @@ TEST_CASE("As Range", "[Property]")
     prop[sys.add()] = 42.0;
     prop[sys.add()] = 84.0;
     auto range = prop.asRange();
-    for_each(view::zip(sys.asRange(), prop.asRange()), [](std::pair<Test::TestEntity, double&> el){ // Should modify
+    for_each(views::zip(sys.asRange(), prop.asRange()), [](std::pair<Test::TestEntity, double&> el){ // Should modify
         static double count = 1.0;
         el.second = 66.0 * count;
         count += 1.0;
     });
 
-    for_each(view::zip(sys.asRange(), prop.asRange()), [](std::pair<Test::TestEntity, double> el){ // Should not modify
+    for_each(views::zip(sys.asRange(), prop.asRange()), [](std::pair<Test::TestEntity, double> el){ // Should not modify
         static double count = 1.0;
         el.second = 77.0 * count;
         count += 1.0;
     });
 
     std::vector<double> result;
-    for_each(view::zip(sys.asRange(), prop.asRange()), [&result](std::pair<Test::TestEntity, double> el){
+    for_each(views::zip(sys.asRange(), prop.asRange()), [&result](std::pair<Test::TestEntity, double> el){
         result.push_back(el.second);
     });
 

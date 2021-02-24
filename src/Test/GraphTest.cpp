@@ -1,4 +1,4 @@
-#include <catch.hpp>
+#include "test.hpp"
 #include <sstream>
 #include <Entity/Graph/Graph.hpp>
 
@@ -83,7 +83,7 @@ std::ostream& operator << (std::ostream& os, common_pair<T, U> const& p) {
 
 TEST_CASE("BFS", "[Graph]")
 {
-    using namespace ranges::v3;
+    using namespace ranges;
     /*
         v0 -e0-> v1 -e1-> v2
            -e2-> v3 -e3-> v4
@@ -158,11 +158,11 @@ auto dijkstraBoilerplate()
     ShortestPathView<GraphType> sp(dijkstra, addOrGetVertex("e"));
     CHECK(sp.weight() == 26);
 
-    namespace rng = ranges::v3;
+    namespace rng = ranges;
     const std::vector<std::string> goldenSp{{"e", "d", "c", "a"}};
     const std::vector<std::string> shortestPath = [&]()
     {
-        auto source = rng::view::transform([&](typename GraphType::ArcType arc) -> typename GraphType::VertexType
+        auto source = rng::views::transform([&](typename GraphType::ArcType arc) -> typename GraphType::VertexType
         {
             return d.source(arc);
         });
