@@ -56,12 +56,12 @@ constexpr typename std::vector<ValueType>::size_type Property<KeyType, ValueType
     return m_values.capacity();
 }
 template <typename KeyType, typename ValueType, template <typename> class SystemType>
-typename std::vector<ValueType>::reference Property<KeyType, ValueType, SystemType>::operator[](KeyType key)
+typename std::vector<ValueType>::reference Property<KeyType, ValueType, SystemType>::operator[](const KeyType& key)
 {
     return m_values[m_indexer->lookup(key)];
 }
 template <typename KeyType, typename ValueType, template <typename> class SystemType>
-typename std::vector<ValueType>::const_reference Property<KeyType, ValueType, SystemType>::operator[](KeyType key) const
+typename std::vector<ValueType>::const_reference Property<KeyType, ValueType, SystemType>::operator[](const KeyType& key) const
 {
     return m_values[m_indexer->lookup(key)];
 }
@@ -113,15 +113,15 @@ void Property<KeyType, ValueType, SystemType>::connectSignals()
 {
     if(auto notifier = m_notifier.lock())
     {
-        m_onAddConnection     = std::move(notifier->onAdd.connect([this](KeyType en) {
+        m_onAddConnection     = notifier->onAdd.connect([this](KeyType en) {
             this->onAdd(en);
-        }));
-        m_onReserveConnection = std::move(notifier->onReserve.connect([this](std::size_t size) {
+        });
+        m_onReserveConnection = notifier->onReserve.connect([this](std::size_t size) {
             this->onReserve(size);
-        }));
-        m_onEraseConnection   = std::move(notifier->onErase.connect([this](KeyType en) {
+        });
+        m_onEraseConnection   = notifier->onErase.connect([this](KeyType en) {
             this->onErase(en);
-        }));
+        });
     }
 }
 

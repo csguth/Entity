@@ -28,42 +28,31 @@ public:
 
 // A composition should inherit Right Mapped when it is necessary O(1) mapping from child to parent.
 template <typename ParentType, template <typename> class ParentSystemType, typename ChildType, template <typename> class ChildSystemType>
-class RightMapped
+struct RightMapped
 {
-public:
-    RightMapped(ParentSystemType<ParentType>&, ChildSystemType<ChildType>& child):
-        m_parent(makeProperty<ParentType>(child))
+    RightMapped(ParentSystemType<ParentType>&, ChildSystemType<ChildType>& child)
+        : parent{ makeProperty<ParentType>(child) }
+    {}
+    void addChild(const ParentType& parent, const ChildType& child)
     {
-
+        this->parent[child] = parent;
     }
-    ParentType parent(ChildType child) const
+    void removeChild(const ParentType& parent, const ChildType& child)
     {
-        return m_parent[child];
-    }
-    void parent(ChildType child, ParentType parent)
-    {
-        m_parent[child] = parent;
-    }
-    void addChild(ParentType parent, ChildType child)
-    {
-        m_parent[child] = parent;
-    }
-    void removeChild(ParentType parent, ChildType child)
-    {
-        if(this->parent(child) == parent)
+        if (this->parent[child] == parent)
         {
-            this->parent(child, ParentType{});
+            this->parent[child] = ParentType{};
         }
     }
-protected:
-    Property<ChildType, ParentType, ChildSystemType> m_parent;
+    
+    Property<ChildType, ParentType, ChildSystemType> parent;
 };
 
 // SFINAE to connect the signal for erasing child entity >
 template <typename ParentType, template <typename> class ParentSystemType, typename ChildType, template <typename> class ChildSystemType>
 auto connectOnEraseIfPossibleForLeftMapped(int, boost::signals2::scoped_connection& connection, std::shared_ptr<typename ParentSystemType<ParentType>::Notifier>& notifier, ChildSystemType<ChildType>& child, Property<ParentType, ChildType, ParentSystemType>& firstChild, Property<ChildType, ChildType, ChildSystemType>& nextSibling) -> decltype((void)&ChildSystemType<ChildType>::erase, void())
 {
-    connection = std::move(notifier->onErase.connect([&](ParentType en)
+    connection = notifier->onErase.connect([&](ParentType en)
     {
         for(ChildType curr{firstChild[en]}, next; curr != ChildType{}; curr = next)
         {
@@ -71,7 +60,7 @@ auto connectOnEraseIfPossibleForLeftMapped(int, boost::signals2::scoped_connecti
             child.erase(curr);
         }
         firstChild.onErase(en);
-    }));
+    });
 }
 
 template <typename ParentType, template <typename> class ParentSystemType, typename ChildType, template <typename> class ChildSystemType>
@@ -81,66 +70,47 @@ auto connectOnEraseIfPossibleForLeftMapped(char, boost::signals2::scoped_connect
 
 // A composition should inherit Left Mapped when it is necessary O(1) mapping from parent to children.
 template <typename ParentType, template <typename> class ParentSystemType, typename ChildType, template <typename> class ChildSystemType>
-class LeftMapped
+struct LeftMapped
 {
-public:
-    LeftMapped(ParentSystemType<ParentType>& parent, ChildSystemType<ChildType>& child):
-        m_childrenSize(makeProperty<std::size_t>(parent)),
-        m_firstChild(makeProperty<ChildType>(parent)),
-        m_nextSibling(makeProperty<ChildType>(child))
+    LeftMapped(ParentSystemType<ParentType>& parent, ChildSystemType<ChildType>& child)
+        : childrenCount { makeProperty<std::size_t>(parent) }
+        , firstChild { makeProperty<ChildType>(parent) }
+        , nextSibling { makeProperty<ChildType>(child) }
     {
-        m_firstChild.disconnectOnErase();
-        connectOnEraseIfPossibleForLeftMapped(0, m_onEraseConnection, parent.notifier, child, m_firstChild, m_nextSibling);
+        firstChild.disconnectOnErase();
+        connectOnEraseIfPossibleForLeftMapped(0, m_onEraseConnection, parent.notifier, child, firstChild, nextSibling);
     }
-    ChildType firstChild(ParentType parent) const
+    
+    void addChild(const ParentType& parent, ChildType child)
     {
-        return m_firstChild[parent];
+        ++childrenCount[parent];
+        nextSibling[child] = firstChild[parent];
+        firstChild[parent] = std::move(child);
     }
-    ChildType nextSibling(ChildType child) const
-    {
-        return m_nextSibling[child];
-    }
-    void firstChild(ParentType parent, ChildType child)
-    {
-        m_firstChild[parent] = child;
-    }
-    void nextSibling(ChildType child, ChildType next)
-    {
-        m_nextSibling[child] = next;
-    }
-    void addChild(ParentType parent, ChildType child)
-    {
-        ++m_childrenSize[parent];
-        m_nextSibling[child] = m_firstChild[parent];
-        m_firstChild[parent] = child;
-    }
-    std::size_t childrenSize(ParentType parent) const
-    {
-        return m_childrenSize[parent];
-    }
+    
     void disconnectOnErase()
     {
         m_onEraseConnection.disconnect();
     }
-    void removeChild(ParentType parent, ChildType child)
+    void removeChild(const ParentType& parent, const ChildType& child)
     {
-        --this->m_childrenSize[parent];
-        if(child == this->firstChild(parent))
+        --this->childrenCount[parent];
+        if(child == firstChild[parent])
         {
-            this->firstChild(parent, this->nextSibling(child));
+            firstChild[parent] = nextSibling[child];
         }
         else
         {
-            auto prev = this->firstChild(parent);
-            auto curr = this->nextSibling(prev);
+            auto prev = firstChild[parent];
+            auto curr = nextSibling[prev];
             while(curr != child && curr != ChildType{})
             {
                 prev = curr;
-                curr = this->nextSibling(curr);
+                curr = nextSibling[curr];
             }
             if(curr == child)
             {
-                this->nextSibling(prev, this->nextSibling(curr));
+                nextSibling[prev] = nextSibling[curr];
             }
         }
     }
@@ -178,7 +148,7 @@ public:
         };
         void next()
         {
-            m_current = m_mapped->nextSibling(m_current);
+            m_current = m_mapped->nextSibling[m_current];
         }
         cursor begin_cursor()
         {
@@ -186,9 +156,9 @@ public:
         }
     public:
         ChildrenView() = default;
-        ChildrenView(const LeftMapped& mapped, ParentType parent)
-            : m_mapped(&mapped),
-              m_current(mapped.firstChild(parent))
+        ChildrenView(const LeftMapped& mapped, const ParentType& parent)
+          : m_mapped{ &mapped }
+          , m_current{ mapped.firstChild[parent] }
         { }
         ChildType& current()
         {
@@ -200,11 +170,16 @@ public:
     {
         return ChildrenView(*this, parent);
     }
+    
+    Property<ParentType, ChildType, ParentSystemType> firstChild;
+    Property<ChildType, ChildType, ChildSystemType> nextSibling;
+    Property<ParentType, std::size_t, ParentSystemType> childrenCount;
+    
 protected:
     boost::signals2::scoped_connection m_onEraseConnection;
-    Property<ParentType, std::size_t, ParentSystemType> m_childrenSize;
-    Property<ParentType, ChildType, ParentSystemType> m_firstChild;
-    Property<ChildType, ChildType, ChildSystemType> m_nextSibling;
+    
+    
+    
 };
 
 // SFINAE to connect the signal for erasing child entity >
@@ -217,7 +192,7 @@ auto connectOnEraseIfPossibleForBothMapped(int, boost::signals2::scoped_connecti
 template <typename ParentType, template <typename> class ParentSystemType, typename ChildType, template <typename> class ChildSystemType>
 auto connectOnEraseIfPossibleForBothMapped(char, boost::signals2::scoped_connection& connection, std::shared_ptr<typename ParentSystemType<ParentType>::Notifier>& notifier, ChildSystemType<ChildType>& child, Property<ParentType, ChildType, ParentSystemType>& firstChild, Property<ChildType, ChildType, ChildSystemType>& nextSibling, Property<ChildType, ParentType, ChildSystemType>& parent) -> decltype(void(), void())
 {
-    connection = std::move(notifier->onErase.connect([&](ParentType en)
+    connection = notifier->onErase.connect([&](ParentType en)
     {
         for(ChildType curr{firstChild[en]}, next; curr != ChildType{}; curr = next)
         {
@@ -225,7 +200,7 @@ auto connectOnEraseIfPossibleForBothMapped(char, boost::signals2::scoped_connect
             parent[curr] = ParentType{};
         }
         firstChild.onErase(en);
-    }));
+    });
 }
 // <
 
@@ -242,20 +217,20 @@ public:
     {
         LeftParent::disconnectOnErase();
         {
-            connectOnEraseIfPossibleForBothMapped(0, this->m_onEraseConnection, parent.notifier, child, this->m_firstChild, this->m_nextSibling, this->m_parent);
+            connectOnEraseIfPossibleForBothMapped(0, this->m_onEraseConnection, parent.notifier, child, this->firstChild, this->nextSibling, this->parent);
         }
-        this->m_nextSibling.disconnectOnErase();
-        this->m_parent.disconnectOnErase();
-        m_onEraseChildConnection = std::move(child.notifier->onErase.connect([&](ChildType child)
+        this->nextSibling.disconnectOnErase();
+        this->parent.disconnectOnErase();
+        m_onEraseChildConnection = child.notifier->onErase.connect([&](ChildType child)
         {
-            auto theParent = this->parent(child);
+            auto theParent = this->parent[child];
             if(parent.alive(theParent))
             {
                removeChild(theParent, child);
             }
-            this->m_nextSibling.onErase(child);
-            this->m_parent.onErase(child);
-        }));
+            this->nextSibling.onErase(child);
+            this->parent.onErase(child);
+        });
     }
     void addChild(ParentType parent, ChildType child)
     {
@@ -302,7 +277,7 @@ public:
     {
 
     }
-    void addChild(ParentType parent, ChildType child)
+    void addChild(const ParentType& parent, const ChildType& child)
     {
         Parent::addChild(parent, child);
     }

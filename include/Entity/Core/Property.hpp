@@ -20,8 +20,8 @@ public:
     constexpr typename std::vector<ValueType>::size_type size() const;
     bool empty() const;
     constexpr typename std::vector<ValueType>::size_type capacity() const;
-    typename std::vector<ValueType>::reference operator[](KeyType key);
-    typename std::vector<ValueType>::const_reference operator[](KeyType key) const;
+    typename std::vector<ValueType>::reference operator[](const KeyType& key);
+    typename std::vector<ValueType>::const_reference operator[](const KeyType& key) const;
     auto asRange();
     auto asRange() const;
     const ValueType* data() const;

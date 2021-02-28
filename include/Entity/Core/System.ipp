@@ -77,7 +77,7 @@ constexpr bool SystemBase<BaseType, EntityType>::empty() const
 	return size() == 0;
 }
 template <template <typename> class BaseType, class EntityType>
-bool SystemBase<BaseType, EntityType>::alive(EntityType entity) const
+bool SystemBase<BaseType, EntityType>::alive(const EntityType& entity) const
 {
 	return static_cast<const BaseType<EntityType>*>(this)->isAlive(entity);
 }
@@ -106,7 +106,7 @@ constexpr std::size_t System<EntityType>::getSize() const
     return getIndexer()->lookup(this->m_next);
 }
 template <class EntityType>
-bool System<EntityType>::isAlive(EntityType entity) const
+bool System<EntityType>::isAlive(const EntityType& entity) const
 {
     return entity.id() < getSize();
 }
@@ -134,7 +134,7 @@ System<EntityType>::System() :
     
 }
 template <class EntityType>
-std::size_t System<EntityType>::Indexer::lookup(EntityType en) const
+std::size_t System<EntityType>::Indexer::lookup(const EntityType& en) const
 {
     return en.id();
 }

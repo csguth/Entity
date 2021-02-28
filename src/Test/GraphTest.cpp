@@ -6,28 +6,28 @@ using namespace Entity::Graph;
 
 TEST_CASE("Empty SmartDigraph", "[Graph]")
 {
-    SmartDigraph d;
+    auto const d = SmartDigraph{};
     CHECK(d.order() == 0);
     CHECK(d.size() == 0);
 }
 
 TEST_CASE("Add Vertex", "[Graph]")
 {
-    SmartDigraph d;
+    auto d = SmartDigraph{};
     d.addVertex();
     CHECK(d.order() == 1);
 }
 
 TEST_CASE("Add Arc", "[Graph]")
 {
-    SmartDigraph d;
+    auto d = SmartDigraph{};
     d.addArc(d.addVertex(), d.addVertex());
     CHECK(d.size() == 1);
 }
 
 TEST_CASE("Source, Target, Opposite", "[Graph]")
 {
-    SmartDigraph d;
+    auto d = SmartDigraph{};
     auto source = d.addVertex();
     auto target = d.addVertex();
     auto arc = d.addArc(source, target);

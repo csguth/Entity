@@ -13,57 +13,45 @@ class KeyWrapper final
 {
 public:
     KeyWrapper(SystemType<ValueType>& system) :
-        m_system(system),
-        m_keys(makeProperty<KeyType>(system))
-    {
-
-    }
-    ~KeyWrapper()
+        m_system{ system },
+        keys{ makeProperty<KeyType>(system) }
     {
 
     }
 
-    ValueType addOrGet(KeyType key)
+    ValueType addOrGet(const KeyType& key)
     {
         if (!has(key))
         {
             ValueType en = m_system.get().add();
-            m_map[key] = en;
-            m_keys[en] = key;
+            values[key] = en;
+            keys[en] = key;
             return en;
         }
-        return at(key);
+        return values[key];
     }
 
-    bool has(KeyType key) const
+    bool has(const KeyType& key) const
     {
-        auto resultIt = m_map.find(key);
-        if (resultIt != m_map.end())
+        auto resultIt = values.find(key);
+        if (resultIt != values.end())
         {
             if (m_system.get().alive(resultIt->second))
             {
                 return true;
             }
-            m_map.erase(resultIt);
+            values.erase(resultIt);
             return false;
         }
         return false;
     }
 
-    ValueType at(KeyType key) const
-    {
-        return m_map.at(key);
-    }
-
-    const KeyType& key(ValueType en) const
-    {
-        return m_keys[en];
-    }
 
 private:
     std::reference_wrapper<SystemType<ValueType>> m_system;
-    Property<ValueType, KeyType, SystemType> m_keys;
-    mutable std::unordered_map<KeyType, ValueType> m_map;
+public:
+    Property<ValueType, KeyType, SystemType> keys;
+    mutable std::unordered_map<KeyType, ValueType> values;
 
 };
 

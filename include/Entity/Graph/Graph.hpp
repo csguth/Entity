@@ -11,23 +11,8 @@ namespace Entity
 namespace Graph
 {
 
-struct Vertex: Base<Vertex>
-{
-    using Base<Vertex>::Base;
-    static std::string name()
-    {
-        return "Vertex";
-    }
-};
-
-struct Arc: Base<Arc>
-{
-    using Base<Arc>::Base;
-    static std::string name()
-    {
-        return "Arc";
-    }
-};
+ENTITY_ENTITY_DECLARATION(Vertex);
+ENTITY_ENTITY_DECLARATION(Arc);
 
 
 template <template <typename> class SystemType>
@@ -57,28 +42,29 @@ public:
     {
         return m_vertices.add();
     }
-    Arc addArc(Vertex source, Vertex target)
+    Arc addArc(const Vertex& source, const Vertex& target)
     {
         const Arc arc = m_arcs.add();
         m_outArcs.addChild(source, arc);
         m_inArcs.addChild(target, arc);
         return arc;
     }
-    uint32_t inDegree(Vertex v) const
+    uint32_t inDegree(const Vertex& v) const
     {
-        return m_inArcs.childrenSize(v);
+        return m_inArcs.childrenCount[v];
     }
-    uint32_t outDegree(Vertex u) const
+    uint32_t outDegree(const Vertex& u) const
     {
-        return m_outArcs.childrenSize(u);
+        return m_outArcs.childrenCount[u];
     }
-    Vertex source(Arc arc) const
+    
+    Vertex source(const Arc& arc) const
     {
-        return m_outArcs.parent(arc);
+        return m_outArcs.parent[arc];
     }
-    Vertex target(Arc arc) const
+    Vertex target(const Arc& arc) const
     {
-        return m_inArcs.parent(arc);
+        return m_inArcs.parent[arc];
     }
     Vertex opposite(Arc arc, Vertex vertex) const
     {

@@ -6,51 +6,12 @@
 
 using namespace Entity;
 
-TEST_CASE("Mapping interface", "[Hierarchy]")
+template <std::size_t N, typename T>
+auto add(T& system) -> std::array<decltype(system.add()), N>
 {
-    {
-        auto parentSystem = SystemWithDeletion<Test::Parent>{};
-        auto childSystem  = SystemWithDeletion<Test::Child>{};
-        auto composition = makeComposition<Left>(parentSystem, childSystem);
-        auto parent = parentSystem.add();
-        auto child  = childSystem.add();
-        auto child2  = childSystem.add();
-        composition.firstChild(parent, child);
-        composition.nextSibling(child, child2);
-        CHECK(composition.firstChild(parent) == child);
-        CHECK(composition.nextSibling(child) == child2);
-    }
-    {
-        auto parentSystem = SystemWithDeletion<Test::Parent>{};
-        auto childSystem  = SystemWithDeletion<Test::Child>{};
-        auto composition = makeComposition<Right>(parentSystem, childSystem);
-        auto parent = parentSystem.add();
-        auto parent2 = parentSystem.add();
-        auto child  = childSystem.add();
-        auto child2 = childSystem.add();
-        composition.parent(child, parent);
-        composition.parent(child2, parent2);
-        CHECK(composition.parent(child) == parent);
-        CHECK(composition.parent(child2) == parent2);
-        CHECK(!(composition.parent(child) == composition.parent(child2)));
-    }
-    {
-        auto parentSystem = SystemWithDeletion<Test::Parent>{};
-        auto childSystem  = SystemWithDeletion<Test::Child>{};
-        auto composition = makeComposition<Both>(parentSystem, childSystem);
-        auto parent = parentSystem.add();
-        auto child  = childSystem.add();
-        auto child2  = childSystem.add();
-        composition.firstChild(parent, child);
-        composition.nextSibling(child, child2);
-        composition.parent(child, parent);
-        composition.parent(child2, parent);
-        CHECK(composition.firstChild(parent) == child);
-        CHECK(composition.nextSibling(child) == child2);
-        CHECK(composition.parent(child) == parent);
-        CHECK(composition.parent(child2) == parent);
-    }
-
+    auto out = std::array<decltype(system.add()), N>{};
+    for (int i = 0; i < N; ++i) out[i] = system.add();
+    return out;
 }
 
 TEST_CASE("Add child", "[Hierarchy]")
@@ -60,14 +21,14 @@ TEST_CASE("Add child", "[Hierarchy]")
         auto childSystem  = SystemWithDeletion<Test::Child>{};
         auto composition = makeComposition<Left>(parentSystem, childSystem);
         auto parent = parentSystem.add();
-        CHECK(composition.childrenSize(parent) == 0);
+        CHECK(composition.childrenCount[parent] == 0);
         auto child  = childSystem.add();
         auto child2  = childSystem.add();
         composition.addChild(parent, child);
         composition.addChild(parent, child2);
-        CHECK(composition.firstChild(parent) == child2);
-        CHECK(composition.nextSibling(child2) == child);
-        CHECK(composition.childrenSize(parent) == 2);
+        CHECK(composition.firstChild[parent] == child2);
+        CHECK(composition.nextSibling[child2] == child);
+        CHECK(composition.childrenCount[parent] == 2);
     }
     {
         auto parentSystem = SystemWithDeletion<Test::Parent>{};
@@ -79,24 +40,24 @@ TEST_CASE("Add child", "[Hierarchy]")
         auto child2 = childSystem.add();
         composition.addChild(parent, child);
         composition.addChild(parent2, child2);
-        CHECK(composition.parent(child) == parent);
-        CHECK(composition.parent(child2) == parent2);
+        CHECK(composition.parent[child] == parent);
+        CHECK(composition.parent[child2] == parent2);
     }
     {
         auto parentSystem = SystemWithDeletion<Test::Parent>{};
         auto childSystem  = SystemWithDeletion<Test::Child>{};
         auto composition = makeComposition<Both>(parentSystem, childSystem);
         auto parent = parentSystem.add();
-        CHECK(composition.childrenSize(parent) == 0);
+        CHECK(composition.childrenCount[parent] == 0);
         auto child  = childSystem.add();
         auto child2  = childSystem.add();
         composition.addChild(parent, child);
         composition.addChild(parent, child2);
-        CHECK(composition.parent(child) == parent);
-        CHECK(composition.parent(child2) == parent);
-        CHECK(composition.firstChild(parent) == child2);
-        CHECK(composition.nextSibling(child2) == child);
-        CHECK(composition.childrenSize(parent) == 2);
+        CHECK(composition.parent[child] == parent);
+        CHECK(composition.parent[child2] == parent);
+        CHECK(composition.firstChild[parent] == child2);
+        CHECK(composition.nextSibling[child2] == child);
+        CHECK(composition.childrenCount[parent] == 2);
     }
 
 }
@@ -106,9 +67,9 @@ TEST_CASE("Range adaptors", "[Hierarchy]")
 {
     auto parentSystem = SystemWithDeletion<Test::Parent>{};
     auto childSystem  = SystemWithDeletion<Test::Child>{};
-    auto parent0 = parentSystem.add();
-    auto parent1 = parentSystem.add();
-    LeftMapped<Test::Parent, SystemWithDeletion, Test::Child, SystemWithDeletion> leftMapped(parentSystem, childSystem);
+    auto const parent0 = parentSystem.add();
+    auto const parent1 = parentSystem.add();
+    auto leftMapped = LeftMapped<Test::Parent, SystemWithDeletion, Test::Child, SystemWithDeletion>{ parentSystem, childSystem};
     Test::Child child00, child01, child02, child10;
     leftMapped.addChild(parent0, child00 = childSystem.add());
     leftMapped.addChild(parent0, child01 = childSystem.add());
@@ -191,7 +152,7 @@ TEST_CASE("Strong composition", "[Hierarchy]")
         composition.addChild(parent, child);
         parentSystem.erase(parent);
         CHECK(childSystem.alive(child));
-        CHECK(!parentSystem.alive(composition.parent(child)));
+        CHECK(!parentSystem.alive(composition.parent[child]));
     }
 
 }
@@ -207,15 +168,15 @@ TEST_CASE("Weak adapter", "[Hierarchy]")
         auto parent = parentSystem.add();
         auto child  = childSystem.add();
         composition.addChild(parent, child);
-        CHECK(composition.childrenSize(parent) == 1);
+        CHECK(composition.childrenCount[parent] == 1);
         parentSystem.erase(parent);
         CHECK(childSystem.alive(child));
         parent = parentSystem.add();
         composition.addChild(parent, child);
-        CHECK(composition.childrenSize(parent) == 1);
+        CHECK(composition.childrenCount[parent] == 1);
         childSystem.erase(child);
         // WARNING: Since the children doesn't map to its parent, the parent->child ref is now out-of-sync.
-        CHECK(composition.childrenSize(parent) == 1);
+        CHECK(composition.childrenCount[parent] == 1);
     }
     {
         // Without the weak adapter
@@ -239,19 +200,19 @@ TEST_CASE("Weak adapter", "[Hierarchy]")
         auto child2 = childSystem.add();
         composition.addChild(parent, child);
         composition.addChild(parent, child2);
-        CHECK(composition.childrenSize(parent) == 2);
+        CHECK(composition.childrenCount[parent] == 2);
         parentSystem.erase(parent);
         CHECK(childSystem.alive(child));
         CHECK(childSystem.alive(child2));
-        CHECK(composition.parent(child) == Test::Parent{}); // Children parents are sync'd.
-        CHECK(composition.parent(child2) == Test::Parent{});
+        CHECK(composition.parent[child] == Test::Parent{}); // Children parents are sync'd.
+        CHECK(composition.parent[child2] == Test::Parent{});
         parent = parentSystem.add();
         composition.addChild(parent, child);
         composition.addChild(parent, child2);
-        CHECK(composition.parent(child) == parent);
-        CHECK(composition.parent(child2) == parent);
+        CHECK(composition.parent[child] == parent);
+        CHECK(composition.parent[child2] == parent);
         childSystem.erase(child);
-        CHECK(composition.childrenSize(parent) == 1);
+        CHECK(composition.childrenCount[parent] == 1);
         CHECK(count(composition.children(parent), child) == 0);
         CHECK(count(composition.children(parent), child2) == 1);
     }
@@ -264,14 +225,14 @@ TEST_CASE("Add/Remove child", "[Hierarchy]")
         auto parent = parentSystem.add();
         auto child0 = childSystem.add();
         auto child1 = childSystem.add();
-        CHECK(composition.childrenSize(parent) == 0);
+        CHECK(composition.childrenCount[parent] == 0);
         composition.addChild(parent, child0);
         composition.addChild(parent, child1);
-        CHECK(composition.childrenSize(parent) == 2);
+        CHECK(composition.childrenCount[parent] == 2);
         composition.removeChild(parent, child0);
         CHECK(count(composition.children(parent), child0) == 0);
         CHECK(count(composition.children(parent), child1) == 1);
-        CHECK(composition.childrenSize(parent) == 1);
+        CHECK(composition.childrenCount[parent] == 1);
     };
     {
         System<Test::Parent> parentSystem;

@@ -157,14 +157,14 @@ TEST_CASE_METHOD(Test::Fixture::Empty<System>, "KeyWrapper empty", "[System]")
 {
     auto keyWrapper = makeKeyWrapper<std::string>(system);
     CHECK(!keyWrapper.has(Test::Fixture::KeyWrapperWithEntity::key()));
-    REQUIRE_THROWS(keyWrapper.at(Test::Fixture::KeyWrapperWithEntity::key()));
+    REQUIRE_THROWS(keyWrapper.values.at(Test::Fixture::KeyWrapperWithEntity::key()));
 }
 
 TEST_CASE_METHOD(Test::Fixture::KeyWrapperWithEntity, "KeyWrapper add", "[System]")
 {
-    CHECK(keyWrapper.key(entity) == key());
+    CHECK(keyWrapper.keys[entity] == key());
     CHECK(keyWrapper.has(key()));
-    CHECK(keyWrapper.at(key()) == entity);
+    CHECK(keyWrapper.values[key()] == entity);
     CHECK(system.size() == 1);
 }
 

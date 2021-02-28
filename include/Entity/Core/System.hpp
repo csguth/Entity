@@ -4,6 +4,7 @@
 #include <boost/signals2/dummy_mutex.hpp>
 #include <boost/signals2/signal.hpp>
 #include <boost/signals2/signal_type.hpp>
+#include <string_view>
 #include <range/v3/all.hpp>
 
 namespace Entity {
@@ -22,7 +23,7 @@ public:
     bool operator<(const Base& other) const;
     friend std::ostream& operator<<(std::ostream& out, const Base<Derived>& this_)
     {
-        return out << Derived::name() << "(" << this_.m_id << ")";
+        return out << Derived::name << "(" << this_.m_id << ")";
     }
     
 private:
@@ -35,10 +36,7 @@ private:
 struct __name : Entity::Base<__name>\
 {\
     using Base<__name>::Base;\
-    static std::string name()\
-    {\
-        return #__name;\
-    }\
+    static constexpr std::string_view name{#__name};\
 };
 
 namespace Entity
@@ -59,7 +57,7 @@ public:
     constexpr std::size_t capacity() const;
     constexpr std::size_t size() const;
     constexpr bool empty() const;
-    bool alive(EntityType entity) const;
+    bool alive(const EntityType& entity) const;
     auto indexer() const;
     auto asRange() const;
     
@@ -101,7 +99,7 @@ protected:
     void doAdd();
     void doReserve(std::size_t capacity);
     constexpr std::size_t getSize() const;
-    bool isAlive(EntityType entity) const;
+    bool isAlive(const EntityType& entity) const;
     std::shared_ptr<Indexer> getIndexer() const;
     auto getRange() const;
     std::size_t getCapacity() const;
@@ -114,7 +112,7 @@ private:
 template <class EntityType>
 struct System<EntityType>::Indexer
 {
-    std::size_t lookup(EntityType en) const;
+    std::size_t lookup(const EntityType& en) const;
 };
 
 #include "System.ipp"

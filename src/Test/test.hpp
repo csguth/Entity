@@ -10,14 +10,7 @@
 namespace Test
 {
 
-struct TestEntity: Entity::Base<TestEntity>
-{
-    using Entity::Base<TestEntity>::Base;
-    static std::string name()
-    {
-        return "TestEntity";
-    }
-};
+ENTITY_ENTITY_DECLARATION(TestEntity)
 
 namespace Fixture
 {

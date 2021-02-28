@@ -1,10 +1,10 @@
 template <class EntityType>
-std::size_t SystemWithDeletion<EntityType>::Indexer::lookup(EntityType en) const
+std::size_t SystemWithDeletion<EntityType>::Indexer::lookup(const EntityType& en) const
 {
     return m_index.at(en.id());
 }
 template <class EntityType>
-void SystemWithDeletion<EntityType>::Indexer::put(EntityType en, std::size_t index)
+void SystemWithDeletion<EntityType>::Indexer::put(const EntityType& en, std::size_t index)
 {
     m_index[en.id()] = index;
 }
@@ -22,7 +22,7 @@ SystemWithDeletion<EntityType>::SystemWithDeletion() :
 
 }
 template <class EntityType>
-void SystemWithDeletion<EntityType>::erase(EntityType entity)
+void SystemWithDeletion<EntityType>::erase(const EntityType& entity)
 {
     SystemBase<::Entity::SystemWithDeletion, EntityType>::notifier->onErase(entity);
     const std::size_t index = m_indexer->lookup(entity);
@@ -56,7 +56,7 @@ void SystemWithDeletion<EntityType>::doAdd()
     m_indexer->put(m_entities.back(), m_entities.size()-1);
 }
 template <class EntityType>
-bool SystemWithDeletion<EntityType>::isAlive(EntityType entity) const
+bool SystemWithDeletion<EntityType>::isAlive(const EntityType& entity) const
 {
     return entity != EntityType{} && m_indexer->lookup(entity) != std::numeric_limits<std::size_t>::max();
 }

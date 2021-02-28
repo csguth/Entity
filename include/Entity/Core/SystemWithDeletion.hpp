@@ -14,14 +14,14 @@ public:
     class Indexer;
 
     SystemWithDeletion();
-    void erase(EntityType entity);
+    void erase(const EntityType& entity);
 
 protected:
     constexpr std::size_t getSize() const;
     auto getRange() const;
     void doReserve(std::size_t size);
     void doAdd();
-    bool isAlive(EntityType entity) const;
+    bool isAlive(const EntityType& entity) const;
     std::shared_ptr<Indexer> getIndexer() const;
     std::size_t getCapacity() const;
 
@@ -36,10 +36,10 @@ class SystemWithDeletion<EntityType>::Indexer
 public:
     friend SystemWithDeletion;
 
-    std::size_t lookup(EntityType en) const;
+    std::size_t lookup(const EntityType& en) const;
 
 private:
-    void put(EntityType en, std::size_t index);
+    void put(const EntityType& en, std::size_t index);
     std::size_t allocate();
 
     std::vector<std::size_t> m_index;
