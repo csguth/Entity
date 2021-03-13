@@ -55,7 +55,7 @@ public:
     MappedPort addOrGetInputPort(ModuleDecl module, std::string theName)
     {
         auto port = mInputs.map.addOrGet(name(module) + "." + theName);
-        if (mDeclInputs.parent(port) != module)
+        if (mDeclInputs.parent[port] != module)
             mDeclInputs.addChild(module, port);
         return mapPort(ModuleInst{}, port, addOrGetWire(module, theName));
     }
@@ -63,7 +63,7 @@ public:
     MappedPort addOrGetOutputPort(ModuleDecl module, std::string theName)
     {
         auto port = mOutputs.map.addOrGet(name(module) + "." + theName);
-        if (mDeclOutputs.parent(port) != module)
+        if (mDeclOutputs.parent[port] != module)
             mDeclOutputs.addChild(module, port);
         return mapPort(ModuleInst{}, port, addOrGetWire(module, theName));
     }
@@ -86,8 +86,8 @@ public:
 
     Wire addOrGetWire(ModuleDecl decl, std::string name)
     {
-        auto wire = mWires.map.addOrGet(mDecls.map.key(decl) + "." + name);
-        if (mDeclWires.parent(wire) != decl)
+        auto wire = mWires.map.addOrGet(mDecls.map.keys[decl] + "." + name);
+        if (mDeclWires.parent[wire] != decl)
             mDeclWires.addChild(decl, wire);
         return wire;
     }
@@ -99,37 +99,37 @@ public:
 
     ModuleDecl parent(ModuleInst inst) const
     {
-        return mDeclChildInsts.parent(inst);
+        return mDeclChildInsts.parent[inst];
     }
 
     ModuleDecl decl(ModuleInst inst) const
     {
-        return mDeclInsts.parent(inst);
+        return mDeclInsts.parent[inst];
     }
 
     const std::string& name(ModuleInst inst) const
     {
-        return mInsts.map.key(inst);
+        return mInsts.map.keys[inst];
     }
 
     const std::string& name(ModuleDecl decl) const
     {
-        return mDecls.map.key(decl);
+        return mDecls.map.keys[decl];
     }
 
     const std::string& name(Wire wire) const
     {
-        return mWires.map.key(wire);
+        return mWires.map.keys[wire];
     }
 
     const std::string& name(InputPort port) const
     {
-        return mInputs.map.key(port);
+        return mInputs.map.keys[port];
     }
 
     const std::string& name(OutputPort port) const
     {
-        return mOutputs.map.key(port);
+        return mOutputs.map.keys[port];
     }
 
     const std::string& name(boost::variant<InputPort, OutputPort> port) const
@@ -141,27 +141,27 @@ public:
 
     std::size_t childrenSize(ModuleDecl decl) const
     {
-        return mDeclChildInsts.childrenSize(decl);
+        return mDeclChildInsts.childrenCount[decl];
     }
 
     std::size_t inputPortsSize(ModuleDecl module) const
     {
-        return mDeclInputs.childrenSize(module);
+        return mDeclInputs.childrenCount[module];
     }
 
     std::size_t outputPortsSize(ModuleDecl module) const
     {
-        return mDeclOutputs.childrenSize(module);
+        return mDeclOutputs.childrenCount[module];
     }
 
     std::size_t instsSize(ModuleDecl module) const
     {
-        return mDeclInsts.childrenSize(module);
+        return mDeclInsts.childrenCount[module];
     }
 
     std::size_t wiresSize(ModuleDecl module) const
     {
-        return mDeclWires.childrenSize(module);
+        return mDeclWires.childrenCount[module];
     }
 
     std::size_t moduleDeclsSize() const
@@ -228,11 +228,11 @@ public:
     {
         auto mapped = mMappedPort.add();
         mMappedPortsPorts[mapped] = port;
-        if (mWiresMappedPorts.parent(mapped) != wire)
+        if (mWiresMappedPorts.parent[mapped] != wire)
         {
             mWiresMappedPorts.addChild(wire, mapped);
         }
-        if (inst != ModuleInst{} && mInstsMappedPorts.parent(mapped) != inst)
+        if (inst != ModuleInst{} && mInstsMappedPorts.parent[mapped] != inst)
         {
             mInstsMappedPorts.addChild(inst, mapped);
         }
@@ -256,12 +256,12 @@ public:
 
     Wire wire(MappedPort port) const
     {
-        return mWiresMappedPorts.parent(port);
+        return mWiresMappedPorts.parent[port];
     }
 
     ModuleInst inst(MappedPort port) const
     {
-        return mInstsMappedPorts.parent(port);
+        return mInstsMappedPorts.parent[port];
     }
 
 private:

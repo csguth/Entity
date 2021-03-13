@@ -6,41 +6,10 @@
 
 using namespace Entity;
 
-struct Pin : Entity::Base<Pin>
-{
-    using Entity::Base<Pin>::Base;
-    static std::string name()
-    {
-        return "Pin";
-    }
-};
-
-struct Net : Entity::Base<Net>
-{
-    using Entity::Base<Net>::Base;
-    static std::string name()
-    {
-        return "Net";
-    }
-};
-
-struct CellInst : Entity::Base<CellInst>
-{
-    using Entity::Base<CellInst>::Base;
-    static std::string name()
-    {
-        return "CellInst";
-    }
-};
-
-struct CellDecl : Entity::Base<CellDecl>
-{
-    using Entity::Base<CellDecl>::Base;
-    static std::string name()
-    {
-        return "CellDecl";
-    }
-};
+ENTITY_ENTITY_DECLARATION(Pin);
+ENTITY_ENTITY_DECLARATION(Net);
+ENTITY_ENTITY_DECLARATION(CellInst);
+ENTITY_ENTITY_DECLARATION(CellDecl);
 
 class Netlist final
 {

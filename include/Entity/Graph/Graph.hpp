@@ -112,8 +112,10 @@ public:
     {
         return m_arcs.asRange();
     }
-protected:
+    
     SystemType<Vertex> m_vertices;
+protected:
+    
     SystemType<Arc>    m_arcs;
     decltype(makeComposition<Both>(m_vertices, m_arcs)) m_inArcs;
     decltype(makeComposition<Both>(m_vertices, m_arcs)) m_outArcs;

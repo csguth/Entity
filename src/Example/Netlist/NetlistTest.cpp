@@ -1,3 +1,7 @@
+#define CATCH_CONFIG_MAIN
+#include <catch2/catch.hpp>
+
+#include <iostream>
 #include "Netlist.hpp"
 #include "Verilog.hpp"
 
@@ -93,7 +97,7 @@ TEST_CASE("Hierarchical Buffer")
     std::vector<ModuleInst> topLevel{nl.addOrGetModuleInst(ModuleDecl{}, bufDecl, "buf")};
     nl.topLevel(topLevel.front());
 
-    ranges::for_each(ranges::view::concat(nl.children(bufDecl), topLevel), [&](ModuleInst inst)
+    ranges::for_each(ranges::views::concat(nl.children(bufDecl), topLevel), [&](ModuleInst inst)
     {
         std::cout << nl.name(inst) << " mapped ports:\n";
         ranges::for_each(nl.ports(inst), [&](MappedPort port)
@@ -176,7 +180,7 @@ TEST_CASE("4 bit adder")
     std::vector<ModuleInst> topLevel{nl.addOrGetModuleInst(ModuleDecl{}, fourBitAdderDecl, "adder4")};
     nl.topLevel(topLevel.front());
 
-    ranges::for_each(ranges::view::concat(nl.children(fourBitAdderDecl), topLevel), [&](ModuleInst inst)
+    ranges::for_each(ranges::views::concat(nl.children(fourBitAdderDecl), topLevel), [&](ModuleInst inst)
     {
         std::cout << nl.name(inst) << " mapped ports:\n";
         ranges::for_each(nl.ports(inst), [&](MappedPort port)

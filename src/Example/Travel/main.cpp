@@ -4,18 +4,9 @@
 
 #include <Entity/Graph/Graph.hpp>
 #include <Entity/Graph/Dijkstra.hpp>
+#include <Entity/Core/KeyWrapper.hpp>
 
 using namespace Entity::Graph;
-
-struct City
-{
-    std::string name;
-};
-
-std::ostream& operator<<(std::ostream& out, const City& c)
-{
-    return out << c.name;
-}
 
 struct Travel
 {
@@ -42,30 +33,16 @@ std::ostream& operator << (std::ostream& os, common_pair<T, U> const& p) {
 int main(int, char *[])
 {
     SmartDigraph d;
-    using namespace ranges::v3;
-
-    auto cities = d.makeVertexProperty<City>();
+    using namespace ranges;
+    
+    auto cities = Entity::makeKeyWrapper<std::string_view>(d.m_vertices);
     auto travels = d.makeArcProperty<Travel>();
     auto weigths = d.makeArcProperty<int>();
 
-    std::map<std::string, Vertex> name2city;
-    auto getOrAddCity = [&](std::string name)
+    auto addTravel = [&](std::string_view from, std::string_view to, Travel travel)
     {
-        auto result = name2city.find(name);
-        if(result == name2city.end())
-        {
-            auto city = d.addVertex();
-            cities[city] = {name};
-            name2city[name] = city;
-            return city;
-        }
-        return result->second;
-    };
-
-    auto addTravel = [&](std::string from, std::string to, Travel travel)
-    {
-      auto cityFrom = getOrAddCity(from);
-      auto cityTo = getOrAddCity(to);
+      auto cityFrom = cities.addOrGet(from);
+      auto cityTo = cities.addOrGet(to);
       auto arc = d.addArc(cityFrom, cityTo);
       travels[arc] = travel;
       weigths[arc] = travel.price;
@@ -79,9 +56,9 @@ int main(int, char *[])
         return "£" + std::to_string(div) + "." + (mod < 10 ? "0" + modStr : modStr);
     };
 
-    auto cityCompanyAndPrice = view::transform([&](Arc arc)
+    auto cityCompanyAndPrice = views::transform([&](Arc arc)
     {
-       return cities[d.target(arc)].name + ": " + travels[arc].company.name + "(" + formatPrice(travels[arc].price) + ")";
+        return std::string{cities.keys[d.target(arc)]} + ": " + travels[arc].company.name + "(" + formatPrice(travels[arc].price) + ")";
     });
 
     addTravel("Cambridge", "London/Luton", {{"Greater Anglia", Travel::Company::Type::Train}, 3880});
@@ -108,14 +85,29 @@ int main(int, char *[])
     addTravel("London/Stansted Return", "Cambridge Return", {{"Greater Anglia", Travel::Company::Type::Train}, 1010});
 
     Dijkstra<SmartDigraph> dijkstra(d, weigths);
-    dijkstra.run(getOrAddCity("Cambridge"));
+    dijkstra.run(cities.addOrGet("Cambridge"));
 
-    auto target = getOrAddCity("Cambridge Return");
+    auto target = cities.addOrGet("Cambridge Return");
 
-    ShortestPathView<SmartDigraph> shortestPath{dijkstra, target};
-    const std::vector<std::string> output = (shortestPath | cityCompanyAndPrice);
-
+    auto shortestPath = ShortestPathView<SmartDigraph>{dijkstra, target};
+    
     std::cout << "Best Trip (Total = " << formatPrice(shortestPath.weight()) << "): " << std::endl;
-    std::cout << (output | view::reverse) << std::endl;
+    
+    auto path = (std::move(shortestPath) | cityCompanyAndPrice);
+    
+    for (auto p : path)
+    {
+        std::cout << p << "\n";
+    }
+//    std::vector<std::string>(
+    
+//    std::cout << path << "\n";
+    
+//    auto pathVector = std::vector<std::string>(path.base.begin(), path.end().base());
+//    auto reversed = std::move(pathVector) | views::reverse;
+//    std::cout << reversed << "\n";
+    
+//    auto resultedRange =  shortestPath | cityCompanyAndPrice | views::reverse;
+//    std::cout << resultedRange << std::endl;
     return 0;
 }

@@ -20,12 +20,12 @@ auto getNameWithoutParentName(Netlist& nl)
 template <class Netlist>
 auto name(Netlist& nl)
 {
-    return ranges::view::transform(getNameWithoutParentName(nl));
+    return ranges::views::transform(getNameWithoutParentName(nl));
 }
 
 auto prepend(std::string prefix)
 {
-    return ranges::view::transform([=](auto str2)
+    return ranges::views::transform([=](auto str2)
     {
         return prefix + str2;
     });
@@ -33,7 +33,7 @@ auto prepend(std::string prefix)
 
 auto append(std::string suffix)
 {
-    return ranges::view::transform([=](auto str2)
+    return ranges::views::transform([=](auto str2)
     {
         return str2 + suffix;
     });
@@ -49,11 +49,11 @@ auto preappend(std::string prefix, std::string suffix)
 template <class Netlist>
 auto instAndName(Netlist& nl)
 {
-    return ranges::view::transform([&](auto inst)
+    return ranges::views::transform([&](auto inst)
     {
         std::stringstream ss;
         ranges::copy((nl.ports(inst) |
-                     ranges::view::transform([&](auto mappedPort)
+                     ranges::views::transform([&](auto mappedPort)
                      {
                          auto port = nl.port(mappedPort);
                          const std::string portName = [&]()
@@ -70,7 +70,7 @@ auto instAndName(Netlist& nl)
                          }();
                          return "." + portName + "(" + wireName + ")";
                      }) |
-                     ranges::view::intersperse(", ")),
+                     ranges::views::intersperse(", ")),
                      ranges::ostream_iterator<std::string>(ss));
         return nl.name(nl.decl(inst)) + " " + getNameWithoutParentName(nl)(inst) + " " + ss.str() + ";";
     });
@@ -79,7 +79,7 @@ auto instAndName(Netlist& nl)
 template <typename RangeType, typename SeparatorType, typename StreamType>
 auto intersperseOut(RangeType range, SeparatorType sep, StreamType& stream) -> StreamType&
 {
-    ranges::copy(ranges::view::intersperse(range, sep), ranges::ostream_iterator<std::string>(stream));
+    ranges::copy(ranges::views::intersperse(range, sep), ranges::ostream_iterator<std::string>(stream));
     return stream;
 }
 

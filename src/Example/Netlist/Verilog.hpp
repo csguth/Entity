@@ -46,14 +46,14 @@ private:
         using Views::preappend;
         using Views::instAndName;
         using Views::intersperseOut;
-        return view::transform([this](auto decl) -> std::string
+        return views::transform([this](auto decl) -> std::string
         {
             std::stringstream output;
             auto getName = name(mNetlist);
             auto inputPortsNames = mNetlist.inputPorts(decl) | getName;
             auto outputPortsNames = mNetlist.outputPorts(decl) | getName;
 
-            auto moduleInterface = view::concat(inputPortsNames, outputPortsNames);
+            auto moduleInterface = views::concat(inputPortsNames, outputPortsNames);
             auto inputPorts = inputPortsNames | preappend("input ", ";");
             auto outputPorts = outputPortsNames | preappend("output ", ";");
             output << mIndent.newLine() << "module " << mNetlist.name(decl) << " (";
